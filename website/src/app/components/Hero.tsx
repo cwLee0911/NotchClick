@@ -37,22 +37,11 @@ export function Hero() {
         </span>
       </motion.h1>
 
-      {/* Subtext */}
-      <motion.p
-        initial={false}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-        className="mb-8 text-gray-600 max-w-[320px] sm:max-w-2xl mx-auto"
-        style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', lineHeight: 1.6 }}
-      >
-        Launch apps, control music, check the weather, and monitor your Mac instantly.
-      </motion.p>
-
       {/* Buttons */}
       <motion.div
         initial={false}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
         className="flex flex-col sm:flex-row items-center justify-center gap-4"
       >
         <a

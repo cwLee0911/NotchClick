@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CloudSun, Grid2X2Plus, ListFilter, Music } from 'lucide-react';
+import { CloudSun, Grid2X2Plus, Music } from 'lucide-react';
 import { AppIcon } from './AppIcon';
-import { ControlCenter } from './ControlCenter';
 import { Weather } from './Weather';
 import { MusicPlayer } from './MusicPlayer';
 
-type Tab = 'launcher' | 'music' | 'weather' | 'center';
+type Tab = 'launcher' | 'music' | 'weather';
 
 export function NotchDemo() {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -16,7 +15,6 @@ export function NotchDemo() {
     { id: 'launcher' as Tab, label: 'Launcher', icon: Grid2X2Plus },
     { id: 'music' as Tab, label: 'Music', icon: Music },
     { id: 'weather' as Tab, label: 'Weather', icon: CloudSun },
-    { id: 'center' as Tab, label: 'Center', icon: ListFilter },
   ];
 
   const apps = [
@@ -77,7 +75,7 @@ export function NotchDemo() {
               >
                 <div className="p-5 sm:p-9">
                   {/* Tab Bar */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 rounded-[28px] border border-purple-400/20 bg-purple-950/20 p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,.03)]">
+                  <div className="grid grid-cols-3 gap-1 rounded-[28px] border border-purple-400/20 bg-purple-950/20 p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,.03)]">
                     {tabs.map((tab) => {
                       const Icon = tab.icon;
                       const isActive = activeTab === tab.id;
@@ -149,17 +147,6 @@ export function NotchDemo() {
                           exit={{ opacity: 0, y: -20 }}
                         >
                           <Weather />
-                        </motion.div>
-                      )}
-
-                      {activeTab === 'center' && (
-                        <motion.div
-                          key="center"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -20 }}
-                        >
-                          <ControlCenter />
                         </motion.div>
                       )}
                     </AnimatePresence>
