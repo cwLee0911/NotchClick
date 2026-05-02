@@ -188,9 +188,8 @@ private struct PlayerView: View {
                         accent: vm.selectedProvider?.accentColor ?? .white
                     ) { vm.playPause() }
                     ControlPillButton(icon: "forward.fill") { vm.nextTrack() }
-
-                    Spacer(minLength: 0)
                 }
+                .frame(maxWidth: .infinity, alignment: .center)
             }
         }
         .padding(.horizontal, 12)
