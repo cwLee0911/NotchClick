@@ -3,9 +3,9 @@ import { NotchDemo } from './components/NotchDemo';
 import logoImage from '../imports/image.png';
 import {
   Battery,
-  Bluetooth,
   Grid2X2Plus,
   Languages,
+  Music2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -38,11 +38,11 @@ const features: Array<{
     background: 'rgba(20, 184, 166, 0.12)',
   },
   {
-    icon: Bluetooth,
-    title: 'Bluetooth Control',
-    description: 'Click Bluetooth to connect and manage nearby devices from the notch.',
-    color: '#3b82f6',
-    background: 'rgba(59, 130, 246, 0.12)',
+    icon: Music2,
+    title: 'Music Controls',
+    description: 'Switch Apple Music or Spotify and control playback from the notch.',
+    color: '#22c55e',
+    background: 'rgba(34, 197, 94, 0.12)',
   },
 ];
 

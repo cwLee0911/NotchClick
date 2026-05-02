@@ -3,12 +3,11 @@ import SwiftUI
 struct ControlCenterView: View {
     @EnvironmentObject var vm: QuickSettingsViewModel
     @EnvironmentObject var systemVM: SystemMonitor
-    @EnvironmentObject var musicVM: MusicViewModel
     @AppStorage("nd_language") private var languageCode = AppLanguage.defaultCode
 
     var body: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 8) {
+        VStack(spacing: 0) {
+            HStack(spacing: 6) {
                 LanguageCenterMenuCard(
                     title: L10n.tr(.language, languageCode),
                     selection: $languageCode,
@@ -16,32 +15,6 @@ struct ControlCenterView: View {
                     action: vm.toggleLanguagePopup
                 )
 
-                CompactCenterCard(
-                    title: L10n.tr(.bluetooth, languageCode),
-                    status: bluetoothCardStatus,
-                    icon: "bluetooth",
-                    color: .blue,
-                    isOn: vm.isBluetoothOn,
-                    isActive: vm.isBluetoothPopupVisible,
-                    action: vm.toggleBluetoothPopup
-                )
-
-                CompactCenterCard(
-                    title: L10n.tr(.music, languageCode),
-                    status: musicCardStatus,
-                    icon: musicVM.selectedProvider?.symbolName ?? "music.note.list",
-                    color: musicVM.selectedProvider?.accentColor ?? .pink,
-                    isOn: musicVM.selectedProvider != nil,
-                    isActive: vm.isMusicPopupVisible,
-                    action: {
-                        vm.toggleMusicPopup()
-                        if vm.isMusicPopupVisible { musicVM.refreshNow() }
-                    }
-                )
-            }
-            .frame(height: 76)
-
-            HStack(spacing: 6) {
                 CompactSystemMetricCard(
                     title: L10n.tr(.cpu, languageCode),
                     value: String(format: "%.0f%%", systemVM.stats.cpuUsage),
@@ -77,32 +50,15 @@ struct ControlCenterView: View {
                     }
                 }
             }
-            .frame(height: 42)
+            .frame(height: 78)
 
+            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private var storageFreeGB: Double {
         max(0, systemVM.stats.storageTotalGB - systemVM.stats.storageUsedGB)
-    }
-
-    private var musicCardStatus: String {
-        compactLabel(musicVM.selectedProvider?.title ?? L10n.tr(.choose, languageCode), fallback: L10n.tr(.choose, languageCode))
-    }
-
-    private var bluetoothCardStatus: String {
-        if vm.bluetoothStatusText == "Unavailable" {
-            return L10n.tr(.unavailable, languageCode)
-        }
-        return vm.isBluetoothOn ? L10n.tr(.on, languageCode) : L10n.tr(.off, languageCode)
-    }
-
-    private func compactLabel(_ text: String, fallback: String, limit: Int = 11) -> String {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return fallback }
-        guard trimmed.count > limit else { return trimmed }
-        return String(trimmed.prefix(limit - 1)) + "…"
     }
 
     private func cpuColor(_ value: Double) -> Color {
@@ -135,32 +91,32 @@ private struct LanguageCenterMenuCard: View {
     }
 
     private var languageCard: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 5) {
             ZStack {
                 Circle()
-                    .stroke(Color.white.opacity(0.08), lineWidth: 2.8)
-                    .frame(width: 32, height: 32)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 2.4)
+                    .frame(width: 28, height: 28)
 
                 Circle()
                     .trim(from: 0, to: 0.9)
                     .stroke(
                         Color.mint.opacity(0.88),
-                        style: StrokeStyle(lineWidth: 2.8, lineCap: .round)
+                        style: StrokeStyle(lineWidth: 2.4, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
-                    .frame(width: 32, height: 32)
+                    .frame(width: 28, height: 28)
 
                 Image(systemName: "globe")
-                    .font(.system(size: 11.2, weight: .semibold))
+                    .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.mint)
             }
 
             HStack(spacing: 5) {
                 Text(status)
-                    .font(.system(size: 10.4, weight: .semibold))
+                    .font(.system(size: 10.2, weight: .semibold))
                     .foregroundStyle(.white)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.6)
+                    .minimumScaleFactor(0.58)
 
                 Image(systemName: "chevron.down")
                     .font(.system(size: 6.8, weight: .bold))
@@ -168,13 +124,13 @@ private struct LanguageCenterMenuCard: View {
             }
 
             Text(title)
-                .font(.system(size: 8))
+                .font(.system(size: 7.1, weight: .medium))
                 .foregroundStyle(.white.opacity(0.4))
                 .lineLimit(1)
+                .minimumScaleFactor(0.62)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.vertical, 6)
-        .padding(.horizontal, 6)
+        .padding(6)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Color.white.opacity(isActive ? 0.18 : (isHovered ? 0.1 : 0.05)))
@@ -186,71 +142,6 @@ private struct LanguageCenterMenuCard: View {
     }
 }
 
-private struct CompactCenterCard: View {
-    let title: String
-    let status: String
-    let icon: String
-    let color: Color
-    let isOn: Bool
-    let isActive: Bool
-    let action: () -> Void
-
-    @State private var isHovered = false
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                ZStack {
-                    Circle()
-                        .stroke(Color.white.opacity(0.08), lineWidth: 2.8)
-                        .frame(width: 32, height: 32)
-
-                    Circle()
-                        .trim(from: 0, to: isOn ? 0.9 : 0.18)
-                        .stroke(
-                            isOn ? color.opacity(0.88) : Color.white.opacity(0.2),
-                            style: StrokeStyle(lineWidth: 2.8, lineCap: .round)
-                        )
-                        .rotationEffect(.degrees(-90))
-                        .frame(width: 32, height: 32)
-
-                    Image(systemName: icon)
-                        .font(.system(size: 11.2, weight: .semibold))
-                        .foregroundStyle(isOn ? color : .white.opacity(0.62))
-                }
-
-                Text(status)
-                    .font(.system(size: 10.4, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-
-                Text(title)
-                    .font(.system(size: 8))
-                    .foregroundStyle(.white.opacity(0.4))
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
-            .padding(.horizontal, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.white.opacity(isActive ? 0.18 : (isHovered ? 0.1 : 0.05)))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(
-                        isActive ? Color.white.opacity(0.35)
-                                 : (isOn ? color.opacity(0.22) : Color.white.opacity(0.08)),
-                        lineWidth: isActive ? 1.2 : 1
-                    )
-            )
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
-    }
-}
-
 private struct CompactSystemMetricCard: View {
     let title: String
     let value: String
@@ -259,37 +150,35 @@ private struct CompactSystemMetricCard: View {
     let color: Color
 
     var body: some View {
-        HStack(spacing: 7) {
+        VStack(spacing: 5) {
             MetricRing(
                 fraction: fraction,
                 icon: icon,
                 color: color
             )
 
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(spacing: 1) {
                 Text(value)
-                    .font(.system(size: 9.6, weight: .semibold, design: .monospaced))
+                    .font(.system(size: 10.2, weight: .semibold, design: .monospaced))
                     .foregroundStyle(.white)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                    .minimumScaleFactor(0.58)
 
-                Text(title)
-                    .font(.system(size: 7.2, weight: .medium))
+                Text(title.uppercased())
+                    .font(.system(size: 7.1, weight: .medium))
                     .foregroundStyle(.white.opacity(0.42))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                    .minimumScaleFactor(0.58)
             }
-
-            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 8)
+        .padding(6)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Color.white.opacity(0.045))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(color.opacity(0.16), lineWidth: 1)
         )
     }
@@ -328,36 +217,35 @@ private struct CompactBatteryMetricCard: View {
 
     var body: some View {
         Button(action: onToggleLPM) {
-            HStack(spacing: 7) {
+            VStack(spacing: 5) {
                 MetricRing(
                     fraction: Double(stats.batteryLevel) / 100,
                     icon: iconName,
                     color: color
                 )
 
-                VStack(alignment: .leading, spacing: 1) {
+                VStack(spacing: 1) {
                     Text("\(stats.batteryLevel)%")
-                        .font(.system(size: 9.6, weight: .semibold, design: .monospaced))
+                        .font(.system(size: 10.2, weight: .semibold, design: .monospaced))
                         .foregroundStyle(.white)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.58)
 
-                    Text(title)
-                        .font(.system(size: 7.2, weight: .medium))
+                    Text(title.uppercased())
+                        .font(.system(size: 7.1, weight: .medium))
                         .foregroundStyle(.white.opacity(0.42))
                         .lineLimit(1)
-                        .minimumScaleFactor(0.72)
+                        .minimumScaleFactor(0.58)
                 }
-
-                Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.horizontal, 8)
+            .padding(6)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(Color.white.opacity(isHovered ? 0.08 : 0.045))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(color.opacity(stats.isLowPowerMode ? 0.32 : 0.16), lineWidth: 1)
             )
         }
@@ -386,7 +274,7 @@ private struct MetricRing: View {
         ZStack {
             Circle()
                 .stroke(Color.white.opacity(0.08), lineWidth: 2.2)
-                .frame(width: 24, height: 24)
+                .frame(width: 28, height: 28)
 
             Circle()
                 .trim(from: 0, to: min(max(fraction, 0), 1))
@@ -395,16 +283,16 @@ private struct MetricRing: View {
                     style: StrokeStyle(lineWidth: 2.2, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-                .frame(width: 24, height: 24)
+                .frame(width: 28, height: 28)
 
             Image(systemName: icon)
-                .font(.system(size: 8.5, weight: .semibold))
+                .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(color)
         }
     }
 }
 
-// MARK: - Popup chrome (shared Language / Bluetooth / Music container)
+// MARK: - Popup chrome
 
 private struct PopupHeader: View {
     let title: String
@@ -642,116 +530,6 @@ struct BluetoothPopupView: View {
     }
 }
 
-// MARK: - Music popup
-
-struct MusicPopupView: View {
-    @ObservedObject var vm: MusicViewModel
-    let onClose: () -> Void
-    @AppStorage("nd_language") private var languageCode = AppLanguage.defaultCode
-
-    var body: some View {
-        PopupContainer {
-            PopupHeader(
-                title: L10n.tr(.music, languageCode),
-                subtitle: vm.selectedProvider?.title ?? L10n.tr(.choosePlayer, languageCode),
-                onRefresh: vm.refreshNow,
-                onClose:   onClose
-            )
-
-            Divider().background(Color.white.opacity(0.08))
-
-            VStack(alignment: .leading, spacing: 7) {
-                DetailSectionLabel(text: L10n.tr(.choosePlayer, languageCode))
-                CompactMusicProviderChooser(
-                    selectedProvider: vm.selectedProvider,
-                    onSelect: vm.selectProvider
-                )
-
-                if let provider = vm.selectedProvider {
-                    SettingsRow(
-                        title: provider.localizedOpenActionTitle(languageCode),
-                        icon:  "arrow.up.forward.app",
-                        action: vm.openSelectedApp
-                    )
-                } else {
-                    EmptyStateRow(text: L10n.tr(.chooseMusicApp, languageCode))
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 8)
-            .padding(.bottom, 10)
-        }
-    }
-}
-
-private struct CompactMusicProviderChooser: View {
-    let selectedProvider: MusicProvider?
-    let onSelect: (MusicProvider) -> Void
-
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 2)
-
-    var body: some View {
-        LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(MusicProvider.allCases) { provider in
-                Button(action: { onSelect(provider) }) {
-                    CompactMusicProviderCard(
-                        provider: provider,
-                        isSelected: selectedProvider == provider
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-}
-
-private struct CompactMusicProviderCard: View {
-    let provider: MusicProvider
-    let isSelected: Bool
-    @AppStorage("nd_language") private var languageCode = AppLanguage.defaultCode
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(spacing: 6) {
-                Image(systemName: provider.symbolName)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(isSelected ? provider.accentColor : .white.opacity(0.72))
-
-                Spacer(minLength: 0)
-
-                Circle()
-                    .fill(isSelected ? provider.accentColor : Color.white.opacity(0.16))
-                    .frame(width: 7, height: 7)
-            }
-
-            Text(provider.title)
-                .font(.system(size: 10.5, weight: .semibold))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-
-            Text(isSelected ? L10n.tr(.selected, languageCode) : L10n.tr(.chooseAction, languageCode))
-                .font(.system(size: 7.8, weight: .bold))
-                .foregroundStyle(isSelected ? provider.accentColor.opacity(0.95) : .white.opacity(0.5))
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-        }
-        .frame(maxWidth: .infinity, minHeight: 58, alignment: .topLeading)
-        .padding(10)
-        .background(
-            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .fill(isSelected ? provider.accentColor.opacity(0.2) : Color.black.opacity(0.48))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .stroke(
-                    isSelected ? provider.accentColor.opacity(0.55) : Color.white.opacity(0.06),
-                    lineWidth: 1
-                )
-        )
-    }
-}
-
 // MARK: - Shared popup footer
 
 private struct PopupFooterButton: View {
@@ -866,39 +644,6 @@ private struct RowActionPill: View {
                 Capsule()
                     .fill(isFilled ? tint.opacity(0.82) : tint.opacity(0.12))
             )
-    }
-}
-
-private struct SettingsRow: View {
-    let title: String
-    let icon: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 10) {
-                Image(systemName: icon)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.7))
-
-                Text(title)
-                    .font(.system(size: 11.5, weight: .semibold))
-                    .foregroundStyle(.white)
-
-                Spacer(minLength: 0)
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.38))
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.white.opacity(0.05))
-            )
-        }
-        .buttonStyle(.plain)
     }
 }
 

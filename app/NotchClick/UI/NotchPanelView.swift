@@ -91,13 +91,6 @@ struct NotchPanelView: View {
         switch popup {
         case .language:
             LanguagePopupView(vm: quickSettingsVM)
-        case .bluetooth:
-            BluetoothPopupView(vm: quickSettingsVM)
-        case .music:
-            MusicPopupView(
-                vm: state.musicVM,
-                onClose: { quickSettingsVM.closeCenterPopup() }
-            )
         }
     }
 
@@ -111,8 +104,8 @@ struct NotchPanelView: View {
         let innerLeft: CGFloat = (windowW - panelW) / 2 + 14
         let cardSpacing: CGFloat = 8
         let innerWidth = panelW - 28
-        let cardCount = CGFloat(max(CenterPopup.allCases.count, 1))
-        let totalSpacing = cardSpacing * CGFloat(max(CenterPopup.allCases.count - 1, 0))
+        let cardCount = NotchDimensions.centerStatusCardCount
+        let totalSpacing = cardSpacing * (cardCount - 1)
         let cardWidth = (innerWidth - totalSpacing) / cardCount
         let cardCenterX =
             innerLeft + cardWidth / 2 +
@@ -144,7 +137,6 @@ struct NotchPanelView: View {
                     ControlCenterView()
                         .environmentObject(state.quickSettingsVM)
                         .environmentObject(state.systemVM)
-                        .environmentObject(state.musicVM)
                 }
             }
             .padding(.horizontal, 6)

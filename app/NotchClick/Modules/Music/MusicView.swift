@@ -2,17 +2,22 @@ import SwiftUI
 
 struct MusicView: View {
     @EnvironmentObject var vm: MusicViewModel
-    @EnvironmentObject var state: AppState
 
     var body: some View {
-        Group {
-            if let provider = vm.selectedProvider {
-                providerContent(for: provider)
-            } else {
-                MusicSelectionRequiredView {
-                    state.selectedTab = .center
+        VStack(spacing: 7) {
+            MusicProviderSwitch(
+                selectedProvider: vm.selectedProvider,
+                onSelect: vm.selectProvider
+            )
+
+            Group {
+                if let provider = vm.selectedProvider {
+                    providerContent(for: provider)
+                } else {
+                    MusicSelectionRequiredView()
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -35,24 +40,47 @@ struct MusicView: View {
     }
 }
 
-struct MusicProviderChooser: View {
+private struct MusicProviderSwitch: View {
     let selectedProvider: MusicProvider?
     let onSelect: (MusicProvider) -> Void
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 2)
-
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 10) {
+        HStack(spacing: 8) {
             ForEach(MusicProvider.allCases) { provider in
                 Button(action: { onSelect(provider) }) {
-                    MusicProviderCard(
-                        provider: provider,
-                        isSelected: selectedProvider == provider
-                    )
+                    Text(provider.title)
+                        .font(.system(size: 11.2, weight: .semibold))
+                        .foregroundStyle(selectedProvider == provider ? .white : .white.opacity(0.48))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.74)
+                        .frame(maxWidth: .infinity, minHeight: 28)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(segmentFill(for: provider))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(segmentStroke(for: provider), lineWidth: 1)
+                        )
                 }
                 .buttonStyle(.plain)
             }
         }
+        .frame(height: 30)
+    }
+
+    private func segmentFill(for provider: MusicProvider) -> Color {
+        if selectedProvider == provider {
+            return provider.accentColor.opacity(0.2)
+        }
+        return Color.white.opacity(0.06)
+    }
+
+    private func segmentStroke(for provider: MusicProvider) -> Color {
+        if selectedProvider == provider {
+            return provider.accentColor.opacity(0.34)
+        }
+        return Color.white.opacity(0.05)
     }
 }
 
@@ -74,98 +102,25 @@ struct MusicProviderBadge: View {
     }
 }
 
-private struct MusicSectionHeader: View {
-    let title: String
-    let subtitle: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(title.uppercased())
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.38))
-                .kerning(1.2)
-
-            Text(subtitle)
-                .font(.system(size: 11.5, weight: .medium))
-                .foregroundStyle(.white.opacity(0.58))
-                .lineLimit(2)
-        }
-    }
-}
-
-private struct MusicProviderCard: View {
-    let provider: MusicProvider
-    let isSelected: Bool
-    @AppStorage("nd_language") private var languageCode = AppLanguage.defaultCode
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack {
-                Image(systemName: provider.symbolName)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(isSelected ? provider.accentColor : .white.opacity(0.72))
-
-                Spacer(minLength: 0)
-
-                Circle()
-                    .fill(isSelected ? provider.accentColor : Color.white.opacity(0.16))
-                    .frame(width: 8, height: 8)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(provider.title)
-                    .font(.system(size: 10.5, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
-
-                Text(provider.localizedSubtitle(languageCode))
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.55))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-            }
-
-            Text(isSelected ? L10n.tr(.selected, languageCode) : L10n.tr(.chooseAction, languageCode))
-                .font(.system(size: 8, weight: .bold))
-                .foregroundStyle(isSelected ? provider.accentColor.opacity(0.95) : .white.opacity(0.5))
-                .kerning(0.9)
-        }
-        .frame(maxWidth: .infinity, minHeight: 70, alignment: .topLeading)
-        .padding(11)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(isSelected ? provider.accentColor.opacity(0.2) : Color.black.opacity(0.5))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(isSelected ? provider.accentColor.opacity(0.36) : Color.white.opacity(0.09), lineWidth: 1)
-        )
-    }
-}
-
 private struct MusicSelectionRequiredView: View {
-    let openCenter: () -> Void
     @AppStorage("nd_language") private var languageCode = AppLanguage.defaultCode
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             Image(systemName: "music.note.list")
-                .font(.system(size: 30))
+                .font(.system(size: 24))
                 .foregroundStyle(.white.opacity(0.24))
 
             Text(L10n.tr(.setMusicApp, languageCode))
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 12.5, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.82))
 
             Text(L10n.tr(.chooseMusicApp, languageCode))
-                .font(.system(size: 11.5))
+                .font(.system(size: 10.8))
                 .foregroundStyle(.white.opacity(0.46))
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: 265)
-
-            Button(L10n.tr(.openCenter, languageCode), action: openCenter)
-                .buttonStyle(GhostButtonStyle())
+                .lineLimit(2)
+                .frame(maxWidth: 300)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(MusicPanelSurface(accent: nil))

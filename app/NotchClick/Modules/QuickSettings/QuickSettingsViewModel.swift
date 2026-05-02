@@ -12,32 +12,20 @@ struct BluetoothDeviceItem: Identifiable, Equatable {
 }
 
 enum CenterPopup: String, Identifiable, CaseIterable {
-    case language, bluetooth, music
+    case language
     var id: String { rawValue }
 
     var popupWidth: CGFloat {
-        switch self {
-        case .language: return 214
-        case .music: return 260
-        case .bluetooth: return NotchDimensions.centerPopupWidth
-        }
+        214
     }
 
     var popupHeight: CGFloat {
-        switch self {
-        case .language: return 138
-        case .music: return 208
-        case .bluetooth: return NotchDimensions.centerPopupHeight
-        }
+        138
     }
 
-    /// Index (0…2) of this popup's source card in the Controls tab row.
+    /// Index of this popup's source card in the Controls tab row.
     var cardIndex: Int {
-        switch self {
-        case .language:  return 0
-        case .bluetooth: return 1
-        case .music:     return 2
-        }
+        0
     }
 }
 
@@ -53,8 +41,6 @@ class QuickSettingsViewModel: ObservableObject {
     @Published var activeCenterPopup: CenterPopup? = nil
 
     var isLanguagePopupVisible:  Bool { activeCenterPopup == .language }
-    var isBluetoothPopupVisible: Bool { activeCenterPopup == .bluetooth }
-    var isMusicPopupVisible:     Bool { activeCenterPopup == .music }
 
     var protectedModalActionRunner: (((() -> Void)) -> Void)?
 
@@ -66,9 +52,7 @@ class QuickSettingsViewModel: ObservableObject {
     private let refreshLock = NSLock()
     private var refreshInFlight = false
 
-    init() {
-        refreshAll()
-    }
+    init() {}
 
     // MARK: - Polling
 
@@ -233,10 +217,6 @@ class QuickSettingsViewModel: ObservableObject {
             activeCenterPopup = popup
         }
 
-        switch popup {
-        case .bluetooth: loadBluetoothDetails()
-        default: break
-        }
     }
 
     /// Close whatever center popup is open. Safe to call at any time.
@@ -249,8 +229,6 @@ class QuickSettingsViewModel: ObservableObject {
     }
 
     func toggleLanguagePopup()  { toggleCenterPopup(.language) }
-    func toggleBluetoothPopup() { toggleCenterPopup(.bluetooth) }
-    func toggleMusicPopup()     { toggleCenterPopup(.music) }
 
     // MARK: - Helpers
 

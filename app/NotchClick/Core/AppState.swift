@@ -89,9 +89,7 @@ class AppState: ObservableObject {
         case .weather:
             weatherVM.fetchWeather()
         case .center:
-            quickSettingsVM.startPolling()
             systemVM.startPolling()
-            musicVM.startPolling()
         }
     }
 
@@ -102,9 +100,7 @@ class AppState: ObservableObject {
         case .music:
             musicVM.stopPolling()
         case .center:
-            quickSettingsVM.stopPolling()
             systemVM.stopPolling()
-            musicVM.stopPolling()
             quickSettingsVM.closeCenterPopup()
         }
     }

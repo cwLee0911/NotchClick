@@ -10,12 +10,13 @@ enum NotchDimensions {
 
     // Expanded (panel)
     static let expandedWidth:  CGFloat = 540
-    static let expandedHeight: CGFloat = 240
+    static let expandedHeight: CGFloat = 280
     static let expandedContentTopInset: CGFloat = 12
 
     // Controls dropdown below the panel (Control-Center-style)
     static let centerPopupWidth:  CGFloat = 280
     static let centerPopupHeight: CGFloat = 310
+    static let centerStatusCardCount: CGFloat = 5
     /// Vertical spacing between panel bottom and popup top.
     /// Slight overlap keeps the dropdown visually attached without an outer shadow.
     static let centerPopupGap:    CGFloat = -4
@@ -277,8 +278,8 @@ final class NotchWindowManager: ObservableObject {
         let innerLeft: CGFloat = panelLeft + 14
         let cardSpacing: CGFloat = 8
         let innerWidth = ew - 28
-        let cardCount = CGFloat(max(CenterPopup.allCases.count, 1))
-        let totalSpacing = cardSpacing * CGFloat(max(CenterPopup.allCases.count - 1, 0))
+        let cardCount = NotchDimensions.centerStatusCardCount
+        let totalSpacing = cardSpacing * (cardCount - 1)
         let cardWidth = (innerWidth - totalSpacing) / cardCount
         let cardCenterX =
             innerLeft + cardWidth / 2 +

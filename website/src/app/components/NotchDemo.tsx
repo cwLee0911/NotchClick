@@ -10,7 +10,7 @@ type Tab = 'launcher' | 'music' | 'weather' | 'center';
 
 export function NotchDemo() {
   const [isExpanded, setIsExpanded] = useState(true);
-  const [activeTab, setActiveTab] = useState<Tab>('weather');
+  const [activeTab, setActiveTab] = useState<Tab>('music');
 
   const tabs = [
     { id: 'launcher' as Tab, label: 'Launcher', icon: Grid2X2Plus },
