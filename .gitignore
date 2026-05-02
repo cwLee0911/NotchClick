@@ -1,0 +1,43 @@
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+# xcodegen-generated project (regenerate with `xcodegen generate`)
+NotchClick.xcodeproj/
+.deriveddata/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# JavaScript
+node_modules/
+
+# Distribution artifacts
+dist/
+*.dmg
+*.zip
+*.app
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Secrets / local overrides
+*.p12
+*.p8
+*.cer
+*.mobileprovision
+ExportOptions.plist
