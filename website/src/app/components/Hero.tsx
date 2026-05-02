@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { Download } from 'lucide-react';
 
-const downloadURL = './downloads/NotchClick.dmg';
+const downloadURL = './downloads/NotchClick.dmg?v=20260502-controls';
 
 export function Hero() {
   return (

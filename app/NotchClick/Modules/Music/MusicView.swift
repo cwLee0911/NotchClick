@@ -132,65 +132,69 @@ private struct PlayerView: View {
     let track: MusicTrack
 
     var body: some View {
-        HStack(spacing: 12) {
-            ArtworkView(image: vm.artworkImage)
+        ZStack(alignment: .bottom) {
+            HStack(spacing: 12) {
+                ArtworkView(image: vm.artworkImage)
 
-            VStack(alignment: .leading, spacing: 7) {
-                HStack(alignment: .top, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(track.name)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.78)
+                VStack(alignment: .leading, spacing: 7) {
+                    HStack(alignment: .top, spacing: 10) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(track.name)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.78)
 
-                        Text(track.artist)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.7))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
+                            Text(track.artist)
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(.white.opacity(0.7))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
 
-                        Text(track.album)
-                            .font(.system(size: 10))
-                            .foregroundStyle(.white.opacity(0.42))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
+                            Text(track.album)
+                                .font(.system(size: 10))
+                                .foregroundStyle(.white.opacity(0.42))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+
+                        Spacer(minLength: 4)
+
+                        if let provider = vm.selectedProvider {
+                            MusicProviderBadge(provider: provider)
+                        }
                     }
 
-                    Spacer(minLength: 4)
+                    VStack(spacing: 3) {
+                        ProgressBar(fraction: vm.progressFraction)
 
-                    if let provider = vm.selectedProvider {
-                        MusicProviderBadge(provider: provider)
+                        HStack {
+                            Text(vm.formattedPosition)
+                                .font(.system(size: 8, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.4))
+
+                            Spacer()
+
+                            Text(vm.formattedDuration)
+                                .font(.system(size: 8, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.4))
+                        }
                     }
+                    .padding(.bottom, 46)
                 }
-
-                VStack(spacing: 3) {
-                    ProgressBar(fraction: vm.progressFraction)
-
-                    HStack {
-                        Text(vm.formattedPosition)
-                            .font(.system(size: 8, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.4))
-
-                        Spacer()
-
-                        Text(vm.formattedDuration)
-                            .font(.system(size: 8, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.4))
-                    }
-                }
-
-                HStack(spacing: 8) {
-                    ControlPillButton(icon: "backward.fill") { vm.prevTrack() }
-                    ControlPillButton(
-                        icon: track.isPlaying ? "pause.fill" : "play.fill",
-                        size: 16,
-                        accent: vm.selectedProvider?.accentColor ?? .white
-                    ) { vm.playPause() }
-                    ControlPillButton(icon: "forward.fill") { vm.nextTrack() }
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+            HStack(spacing: 8) {
+                ControlPillButton(icon: "backward.fill") { vm.prevTrack() }
+                ControlPillButton(
+                    icon: track.isPlaying ? "pause.fill" : "play.fill",
+                    size: 16,
+                    accent: vm.selectedProvider?.accentColor ?? .white
+                ) { vm.playPause() }
+                ControlPillButton(icon: "forward.fill") { vm.nextTrack() }
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
