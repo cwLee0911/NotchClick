@@ -1,94 +1,81 @@
 # NotchClick
 
-**Turn the MacBook notch into a fast native control panel.**
+**Your MacBook notch, now useful.**
 
-[Website](https://cwlee0911.github.io/NotchClick/) |
-[Download DMG](https://cwlee0911.github.io/NotchClick/downloads/NotchClick.dmg) |
-[Distribution notes](docs/direct-distribution.md)
+NotchClick turns your MacBook's notch into a fast, native-feeling control panel.
 
-> Download the current macOS build directly from the website.
+Click the notch once to access your favorite apps, music controls, local weather,
+Bluetooth devices, system status, and quick Mac settings -- all from one compact
+space at the top of your screen.
+
+Move your cursor away, and it quietly folds back into the notch.
+
+![NotchClick icon](website/public/app-icon.png)
 
 ---
 
-## Preview
+## What you can do
 
-NotchClick opens from the top-center notch area and folds into a compact panel
-for the things you reach for most: apps, music, weather, Bluetooth, language,
-and live system status.
+- **Open apps faster**  
+  Pin your favorite apps and launch them directly from the notch.
 
-## Highlights
+- **Control your music**  
+  See what's playing and control Apple Music or Spotify.
 
-- **Notch launcher** - pin favorite apps and open them from the expanded notch.
-- **Music controls** - choose Apple Music or Spotify, then control playback in place.
-- **Local weather** - show current conditions using your location only for weather.
-- **Control center** - switch language, manage paired Bluetooth devices, and choose a music app.
-- **System monitor** - glance at CPU, memory, storage, battery, and Low Power Mode.
-- **Native macOS feel** - lightweight SwiftUI app with a menu-bar-style presence.
+- **Check the weather**  
+  View local weather based on your current location.
 
-## Release Status
+- **Monitor your Mac**  
+  See CPU, memory, storage, battery, and system status at a glance.
 
-The website download button serves the current DMG directly:
+- **Manage Bluetooth**  
+  View paired devices and connect or disconnect supported devices.
+
+- **Switch language quickly**  
+  Access language controls without opening macOS settings.
+
+- **Toggle Low Power Mode**  
+  Turn Low Power Mode on or off from the System panel.
+
+---
+
+## System Requirements
+
+- macOS 13 Ventura or later
+- Apple Silicon or Intel Mac
+- Designed for MacBooks with a notch  
+  Also works on non-notched Macs by anchoring to the top of the main display.
+
+---
+
+## Install
+
+1. Download the latest `NotchClick.dmg` from the
+   [website](https://cwlee0911.github.io/NotchClick/).
+2. Open the DMG.
+3. Drag **NotchClick.app** into your `/Applications` folder.
+4. Eject the DMG.
+5. Open **NotchClick** from `/Applications`.
+
+On first launch, macOS may show a security dialog.  
+The app inside the DMG is notarized by Apple, so you can safely click **Open**.
+
+Direct download:
 
 ```text
 https://cwlee0911.github.io/NotchClick/downloads/NotchClick.dmg
 ```
 
-Install flow:
+---
 
-1. Download `NotchClick.dmg` from the website.
-2. Open the DMG.
-3. Drag `NotchClick.app` into `/Applications`.
-4. Open NotchClick from `/Applications`.
+## Low Power Mode permission
 
-## Requirements
+The first time you toggle Low Power Mode, macOS asks for your administrator
+password.
 
-- macOS 13 Ventura or later
-- Apple Silicon or Intel Mac
-- Designed for notched MacBooks
-- Also works on non-notched Macs by anchoring to the top of the main display
-
-## Repository Layout
-
-```text
-app/       macOS app source, helper tool, and app icon assets
-website/   marketing website source
-scripts/   release and packaging scripts
-docs/      direct distribution notes
-```
-
-## Privacy Notes
-
-- Location is requested only for local weather.
-- Music automation is used only after selecting Apple Music or Spotify.
-- Bluetooth access is used to show and manage paired devices where macOS allows it.
-- Low Power Mode setup is limited to the exact `pmset` commands needed to toggle the setting.
-
-## Low Power Mode Permission
-
-The first Low Power Mode setup may require administrator approval. NotchClick
-limits passwordless access to these exact commands:
+NotchClick uses this once to allow only these exact system commands:
 
 ```bash
 /usr/bin/pmset -a lowpowermode 0
 /usr/bin/pmset -a lowpowermode 1
 ```
-
-## Development
-
-Generate the Xcode project from `project.yml`, then build the macOS app in Xcode.
-
-```bash
-xcodegen generate
-```
-
-Run the website locally:
-
-```bash
-cd website
-npm install
-npm run dev
-```
-
-## License
-
-MIT
