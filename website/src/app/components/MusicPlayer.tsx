@@ -79,19 +79,19 @@ export function MusicPlayer() {
             exit={{ opacity: 0, x: -20 }}
             className="bg-white/5 rounded-2xl p-6 border border-white/10"
           >
-            <div className="flex gap-4">
-              {/* Album Art */}
-              <div className="flex-shrink-0 w-24 h-24 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center overflow-hidden">
-                <div className="w-full h-full bg-gradient-to-br from-purple-300 via-purple-500 to-purple-700 flex items-center justify-center">
-                  <svg className="w-12 h-12 text-black/50" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2L14 8L20 8L15 12L17 18L12 14L7 18L9 12L4 8L10 8L12 2Z" />
-                  </svg>
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                {/* Album Art */}
+                <div className="flex-shrink-0 w-24 h-24 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center overflow-hidden">
+                  <div className="w-full h-full bg-gradient-to-br from-purple-300 via-purple-500 to-purple-700 flex items-center justify-center">
+                    <svg className="w-12 h-12 text-black/50" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2L14 8L20 8L15 12L17 18L12 14L7 18L9 12L4 8L10 8L12 2Z" />
+                    </svg>
+                  </div>
                 </div>
-              </div>
 
-              {/* Track Info & Controls */}
-              <div className="flex-1 min-w-0 flex flex-col justify-between">
-                <div>
+                {/* Track Info */}
+                <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="min-w-0 flex-1">
                       <h3 className="text-white font-medium text-base truncate">Music album appears on the left</h3>
@@ -103,36 +103,36 @@ export function MusicPlayer() {
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Progress Bar */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-[10px] text-white/40">
-                    <span>3:03</span>
-                    <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-white/60 rounded-full" style={{ width: '65%' }} />
-                    </div>
-                    <span>3:16</span>
+              {/* Progress Bar */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-[10px] text-white/40">
+                  <span>3:03</span>
+                  <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-white/60 rounded-full" style={{ width: '65%' }} />
                   </div>
+                  <span>3:16</span>
+                </div>
 
-                  {/* Controls */}
-                  <div className="flex items-center justify-center gap-4">
-                    <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/15 transition-colors">
-                      <SkipBack className="w-4 h-4 text-white" />
-                    </button>
-                    <button
-                      onClick={() => setIsPlaying(!isPlaying)}
-                      className="w-10 h-10 flex items-center justify-center rounded-lg bg-green-500 hover:bg-green-600 transition-colors"
-                    >
-                      {isPlaying ? (
-                        <Pause className="w-5 h-5 text-white" fill="white" />
-                      ) : (
-                        <Play className="w-5 h-5 text-white" fill="white" />
-                      )}
-                    </button>
-                    <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/15 transition-colors">
-                      <SkipForward className="w-4 h-4 text-white" />
-                    </button>
-                  </div>
+                {/* Controls */}
+                <div className="flex w-full items-center justify-center gap-4">
+                  <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/15 transition-colors">
+                    <SkipBack className="w-4 h-4 text-white" />
+                  </button>
+                  <button
+                    onClick={() => setIsPlaying(!isPlaying)}
+                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-green-500 hover:bg-green-600 transition-colors"
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-5 h-5 text-white" fill="white" />
+                    ) : (
+                      <Play className="w-5 h-5 text-white" fill="white" />
+                    )}
+                  </button>
+                  <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/15 transition-colors">
+                    <SkipForward className="w-4 h-4 text-white" />
+                  </button>
                 </div>
               </div>
             </div>
