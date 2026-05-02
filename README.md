@@ -1,4 +1,4 @@
-# NotchClick
+# NotchClick [DOWNLOAD PAGE](https://cwlee0911.github.io/NotchClick/).
 
 **Your MacBook notch, now useful.**
 
