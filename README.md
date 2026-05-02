@@ -9,9 +9,6 @@ Bluetooth devices, system status, and quick Mac settings -- all from one compact
 space at the top of your screen.
 
 Move your cursor away, and it quietly folds back into the notch.
-
-![NotchClick icon](website/public/app-icon.png)
-
 ---
 
 ## What you can do
