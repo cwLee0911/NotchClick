@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { Download } from 'lucide-react';
 
-const downloadURL = 'https://github.com/cwLee0911/NotchClick/releases/download/v1.0.0/NotchClick-1.0.0-2.dmg';
+const releasesURL = 'https://github.com/cwLee0911/NotchClick/releases';
 
 export function Hero() {
   return (
@@ -55,9 +55,9 @@ export function Hero() {
         transition={{ duration: 0.6, delay: 0.3 }}
         className="flex flex-col sm:flex-row items-center justify-center gap-4"
       >
-        <a href={downloadURL} className="group inline-flex w-full max-w-[340px] sm:min-w-[360px] items-center justify-center gap-2 px-10 py-4 bg-black text-white rounded-full hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl">
+        <a href={releasesURL} className="group inline-flex w-full max-w-[340px] sm:min-w-[360px] items-center justify-center gap-2 px-10 py-4 bg-black text-white rounded-full hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl">
           <Download className="w-5 h-5" />
-          <span className="font-medium">Download for macOS</span>
+          <span className="font-medium">View GitHub Releases</span>
         </a>
       </motion.div>
     </div>
