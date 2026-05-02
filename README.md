@@ -2,8 +2,8 @@
 
 **Turn the MacBook notch into a fast native control panel.**
 
-[Website](https://cwlee0911.github.io/NotchClick/) ·
-[Releases](https://github.com/cwLee0911/NotchClick/releases) ·
+[Website](https://cwlee0911.github.io/NotchClick/) |
+[Releases](https://github.com/cwLee0911/NotchClick/releases) |
 [Distribution notes](docs/direct-distribution.md)
 
 > Release build is being prepared. The Releases page is linked now, and the
