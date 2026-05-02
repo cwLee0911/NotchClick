@@ -3,11 +3,10 @@
 **Turn the MacBook notch into a fast native control panel.**
 
 [Website](https://cwlee0911.github.io/NotchClick/) |
-[Releases](https://github.com/cwLee0911/NotchClick/releases) |
+[Download DMG](https://cwlee0911.github.io/NotchClick/downloads/NotchClick.dmg) |
 [Distribution notes](docs/direct-distribution.md)
 
-> Release build is being prepared. The Releases page is linked now, and the
-> signed DMG will be published there when it is ready.
+> Download the current macOS build directly from the website.
 
 ---
 
@@ -28,17 +27,15 @@ and live system status.
 
 ## Release Status
 
-NotchClick is not published as a public DMG yet.
-
-When the first build is ready, it will appear here:
+The website download button serves the current DMG directly:
 
 ```text
-https://github.com/cwLee0911/NotchClick/releases
+https://cwlee0911.github.io/NotchClick/downloads/NotchClick.dmg
 ```
 
-Planned install flow:
+Install flow:
 
-1. Download the latest `NotchClick.dmg` from the Releases page.
+1. Download `NotchClick.dmg` from the website.
 2. Open the DMG.
 3. Drag `NotchClick.app` into `/Applications`.
 4. Open NotchClick from `/Applications`.

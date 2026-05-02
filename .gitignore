@@ -23,6 +23,8 @@ dist/
 *.dmg
 *.zip
 *.app
+!website/public/downloads/
+!website/public/downloads/NotchClick.dmg
 
 # macOS
 .DS_Store
