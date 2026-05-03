@@ -4,7 +4,6 @@ import Combine
 enum PanelTab: String, CaseIterable, Identifiable {
     case launcher = "Launcher"
     case music    = "Music"
-    case weather  = "Weather"
     case center   = "Center"
 
     var id: String { rawValue }
@@ -13,7 +12,6 @@ enum PanelTab: String, CaseIterable, Identifiable {
         switch self {
         case .launcher: return "grid.circle.fill"
         case .music:    return "music.note"
-        case .weather:  return "cloud.sun.fill"
         case .center:   return "switch.2"
         }
     }
@@ -35,7 +33,6 @@ class AppState: ObservableObject {
 
     let launcherVM       = LauncherViewModel()
     let musicVM          = MusicViewModel()
-    let weatherVM        = WeatherViewModel()
     let systemVM         = SystemMonitor()
     let quickSettingsVM  = QuickSettingsViewModel()
 
@@ -86,8 +83,6 @@ class AppState: ObservableObject {
             break
         case .music:
             musicVM.startPolling()
-        case .weather:
-            weatherVM.fetchWeather()
         case .center:
             systemVM.startPolling()
         }
@@ -95,7 +90,7 @@ class AppState: ObservableObject {
 
     private func stopPolling(for tab: PanelTab) {
         switch tab {
-        case .launcher, .weather:
+        case .launcher:
             break
         case .music:
             musicVM.stopPolling()

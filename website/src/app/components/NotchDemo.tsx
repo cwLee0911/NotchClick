@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CloudSun, Grid2X2Plus, Music } from 'lucide-react';
+import { Grid2X2Plus, Music } from 'lucide-react';
 import { AppIcon } from './AppIcon';
-import { Weather } from './Weather';
 import { MusicPlayer } from './MusicPlayer';
 
-type Tab = 'launcher' | 'music' | 'weather';
+type Tab = 'launcher' | 'music';
 
 export function NotchDemo() {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -14,7 +13,6 @@ export function NotchDemo() {
   const tabs = [
     { id: 'launcher' as Tab, label: 'Launcher', icon: Grid2X2Plus },
     { id: 'music' as Tab, label: 'Music', icon: Music },
-    { id: 'weather' as Tab, label: 'Weather', icon: CloudSun },
   ];
 
   const apps = [
@@ -75,7 +73,7 @@ export function NotchDemo() {
               >
                 <div className="p-5 sm:p-9">
                   {/* Tab Bar */}
-                  <div className="grid grid-cols-3 gap-1 rounded-[28px] border border-purple-400/20 bg-purple-950/20 p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,.03)]">
+                  <div className="grid grid-cols-2 gap-1 rounded-[28px] border border-purple-400/20 bg-purple-950/20 p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,.03)]">
                     {tabs.map((tab) => {
                       const Icon = tab.icon;
                       const isActive = activeTab === tab.id;
@@ -136,17 +134,6 @@ export function NotchDemo() {
                           exit={{ opacity: 0, y: -20 }}
                         >
                           <MusicPlayer />
-                        </motion.div>
-                      )}
-
-                      {activeTab === 'weather' && (
-                        <motion.div
-                          key="weather"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -20 }}
-                        >
-                          <Weather />
                         </motion.div>
                       )}
                     </AnimatePresence>

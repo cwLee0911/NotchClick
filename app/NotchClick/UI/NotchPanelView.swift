@@ -132,7 +132,6 @@ struct NotchPanelView: View {
                 switch state.selectedTab {
                 case .launcher:  LauncherView()      .environmentObject(state.launcherVM)
                 case .music:     MusicView()         .environmentObject(state.musicVM)
-                case .weather:   WeatherView()       .environmentObject(state.weatherVM)
                 case .center:
                     ControlCenterView()
                         .environmentObject(state.quickSettingsVM)

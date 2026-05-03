@@ -4,8 +4,8 @@
 
 NotchClick turns your MacBook's notch into a fast, native-feeling control panel.
 
-Click the notch once to access your favorite apps, music controls, local weather,
-system status, and quick Mac settings -- all from one compact space at the top
+Click the notch once to access your favorite apps, music controls, system status,
+and quick Mac settings -- all from one compact space at the top
 of your screen.
 
 Move your cursor away, and it quietly folds back into the notch.
@@ -18,9 +18,6 @@ Move your cursor away, and it quietly folds back into the notch.
 
 - **Control your music**  
   See what's playing and control Apple Music or Spotify.
-
-- **Check the weather**  
-  View local weather based on your current location.
 
 - **Monitor your Mac**  
   See CPU, memory, storage, battery, and system status at a glance.
