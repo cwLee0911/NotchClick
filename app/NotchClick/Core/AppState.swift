@@ -4,7 +4,6 @@ import Combine
 enum PanelTab: String, CaseIterable, Identifiable {
     case launcher = "Launcher"
     case music    = "Music"
-    case center   = "Center"
 
     var id: String { rawValue }
 
@@ -12,7 +11,6 @@ enum PanelTab: String, CaseIterable, Identifiable {
         switch self {
         case .launcher: return "grid.circle.fill"
         case .music:    return "music.note"
-        case .center:   return "switch.2"
         }
     }
 }
@@ -33,8 +31,6 @@ class AppState: ObservableObject {
 
     let launcherVM       = LauncherViewModel()
     let musicVM          = MusicViewModel()
-    let systemVM         = SystemMonitor()
-    let quickSettingsVM  = QuickSettingsViewModel()
 
     private var isPolling = false
 
@@ -71,10 +67,7 @@ class AppState: ObservableObject {
         guard isPolling else { return }
 
         isPolling = false
-        systemVM.stopPolling()
         musicVM.stopPolling()
-        quickSettingsVM.stopPolling()
-        quickSettingsVM.closeCenterPopup()
     }
 
     private func startPolling(for tab: PanelTab) {
@@ -83,8 +76,6 @@ class AppState: ObservableObject {
             break
         case .music:
             musicVM.startPolling()
-        case .center:
-            systemVM.startPolling()
         }
     }
 
@@ -94,9 +85,6 @@ class AppState: ObservableObject {
             break
         case .music:
             musicVM.stopPolling()
-        case .center:
-            systemVM.stopPolling()
-            quickSettingsVM.closeCenterPopup()
         }
     }
 }

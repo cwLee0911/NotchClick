@@ -15,20 +15,16 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.0</string>
+	<string>1.0.1</string>
 	<key>CFBundleVersion</key>
-	<string>2</string>
+	<string>3</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>NotchClick uses Apple Events only to control playback in Apple Music or Spotify after you choose a player.</string>
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>NotchClick uses Bluetooth access to show paired devices and connect or disconnect them when you choose.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2026 NotchClick.</string>
-	<key>NSSystemAdministrationUsageDescription</key>
-	<string>NotchClick uses administrator authorization only for one-time setup of passwordless Low Power Mode toggling in the direct download build.</string>
 </dict>
 </plist>

@@ -44,7 +44,7 @@ struct LauncherView: View {
                         )
                     )
                 }
-                .frame(maxWidth: .infinity, alignment: .center)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 .animation(.spring(response: 0.24, dampingFraction: 0.82), value: vm.apps)
 
                 if showAddPopover {
@@ -60,7 +60,7 @@ struct LauncherView: View {
                         .zIndex(1)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onAppear { vm.reloadFromStorageIfChanged() }
         .onDisappear {

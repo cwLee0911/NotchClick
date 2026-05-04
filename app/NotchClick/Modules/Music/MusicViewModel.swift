@@ -44,7 +44,12 @@ enum MusicProvider: String, CaseIterable, Identifiable {
 }
 
 final class MusicViewModel: ObservableObject {
-    @Published var selectedProvider: MusicProvider?
+    @Published var selectedProvider: MusicProvider? {
+        didSet {
+            guard oldValue != selectedProvider else { return }
+            UserPreferences.shared.musicProvider = selectedProvider?.rawValue ?? ""
+        }
+    }
     @Published var track: MusicTrack?
     @Published var artworkImage: NSImage?
     @Published var isSelectedAppRunning = false
@@ -62,7 +67,8 @@ final class MusicViewModel: ObservableObject {
     )
 
     init() {
-        selectedProvider = MusicProvider(rawValue: UserPreferences.shared.musicProvider)
+        selectedProvider = MusicProvider.fromStored(UserPreferences.shared.musicProvider)
+        UserPreferences.shared.musicProvider = selectedProvider?.rawValue ?? ""
     }
 
     deinit {
@@ -79,7 +85,20 @@ final class MusicViewModel: ObservableObject {
         }
 
         selectedProvider = provider
-        UserPreferences.shared.musicProvider = provider.rawValue
+        if isPolling {
+            startPolling()
+        } else {
+            refreshNow()
+        }
+    }
+
+    func restoreSavedProviderSelection() {
+        let savedProvider = MusicProvider.fromStored(UserPreferences.shared.musicProvider)
+        guard selectedProvider != savedProvider else {
+            return
+        }
+
+        selectedProvider = savedProvider
         if isPolling {
             startPolling()
         } else {
@@ -89,7 +108,6 @@ final class MusicViewModel: ObservableObject {
 
     func clearProviderSelection() {
         selectedProvider = nil
-        UserPreferences.shared.musicProvider = ""
         resetPlaybackState()
         timer?.invalidate()
         timer = nil
@@ -272,5 +290,30 @@ final class MusicViewModel: ObservableObject {
         }
 
         refreshNow()
+    }
+}
+
+extension MusicProvider {
+    static func fromStored(_ value: String) -> MusicProvider? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        if let provider = MusicProvider(rawValue: trimmed) {
+            return provider
+        }
+
+        let folded = trimmed
+            .replacingOccurrences(of: "_", with: "-")
+            .lowercased()
+
+        if folded == "apple-music" || folded == "applemusic" || folded == "music" {
+            return .appleMusic
+        }
+
+        if folded == "spotify" {
+            return .spotify
+        }
+
+        return nil
     }
 }

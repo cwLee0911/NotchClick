@@ -118,7 +118,7 @@ DEVICE="$(printf '%s\n' "$ATTACH_OUTPUT" | awk '/^\/dev\// {print $1; exit}')"
 IFS=',' read -r APP_X APP_Y <<<"$APP_ICON_POS"
 IFS=',' read -r APPS_X APPS_Y <<<"$APPLICATIONS_ICON_POS"
 
-osascript <<EOF
+if ! osascript <<EOF
 set dmgFolder to POSIX file "$MOUNT_DIR" as alias
 tell application "Finder"
     tell folder dmgFolder
@@ -142,6 +142,9 @@ tell application "Finder"
     end tell
 end tell
 EOF
+then
+    note "Warning: Finder layout could not be applied; continuing with the default DMG layout"
+fi
 
 sync
 sleep 1

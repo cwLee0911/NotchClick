@@ -68,18 +68,8 @@ The script already runs these checks for you:
 
 After a successful notarized build, `spctl` should report an accepted result, ideally with `source=Notarized Developer ID`.
 
-## Low Power Mode Helper
-
-Signed builds now bundle a privileged Low Power Mode helper as:
-
-- `Contents/Library/HelperTools/NotchClickLowPowerHelper`
-- `Contents/Library/LaunchDaemons/com.notchclick.app.lowpowerd.plist`
-
-On the first Low Power Mode toggle in a signed build, macOS may require one-time approval in `System Settings > General > Login Items`. After approval, the helper can toggle Low Power Mode without repeated password prompts.
-
 ## Troubleshooting
 
 - If archive or export fails, open Xcode once and confirm your team is selected for the target.
 - If notarization fails, inspect the `*.notary.json` and `*.notary-log.json` files in `dist/`.
 - If Gatekeeper does not accept the app, rerun the script and make sure the final zip was recreated after stapling.
-- If Low Power Mode still asks for approval, make sure the app is installed in `/Applications` before testing the signed build.

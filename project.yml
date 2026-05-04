@@ -22,30 +22,16 @@ targets:
         excludes:
           - "**/*.plist"
           - "**/*.entitlements"
-      - path: app/NotchClick/Helpers/LaunchDaemons/com.notchclick.app.lowpowerd.plist
-        buildPhase:
-          copyFiles:
-            destination: wrapper
-            subpath: Contents/Library/LaunchDaemons
     resources:
       - path: app/NotchClick/Resources
-    dependencies:
-      - target: NotchClickLowPowerHelper
-        embed: true
-        link: false
-        copy:
-          destination: wrapper
-          subpath: Contents/Library/HelperTools
     info:
       path: app/NotchClick/Info.plist
       properties:
-        CFBundleShortVersionString: "1.0.0"
-        CFBundleVersion: "2"
+        CFBundleShortVersionString: "1.0.1"
+        CFBundleVersion: "3"
         LSUIElement: true
         LSApplicationCategoryType: "public.app-category.utilities"
         NSAppleEventsUsageDescription: "NotchClick uses Apple Events only to control playback in Apple Music or Spotify after you choose a player."
-        NSBluetoothAlwaysUsageDescription: "NotchClick uses Bluetooth access to show paired devices and connect or disconnect them when you choose."
-        NSSystemAdministrationUsageDescription: "NotchClick uses administrator authorization only for one-time setup of passwordless Low Power Mode toggling in the direct download build."
         NSHumanReadableCopyright: "Copyright © 2026 NotchClick."
     entitlements:
       path: app/NotchClick/NotchClick.entitlements
@@ -59,24 +45,6 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.notchclick.app
         INFOPLIST_FILE: app/NotchClick/Info.plist
         CODE_SIGN_ENTITLEMENTS: app/NotchClick/NotchClick.entitlements
-      configs:
-        debug:
-          CODE_SIGN_IDENTITY: Apple Development
-        release:
-          CODE_SIGN_IDENTITY: Developer ID Application
-  NotchClickLowPowerHelper:
-    type: tool
-    platform: macOS
-    sources:
-      - path: app/NotchClickLowPowerHelper
-      - path: app/NotchClick/Shared/LowPowerModeHelperProtocol.swift
-      - path: app/NotchClick/Shared/CodeSigningIdentity.swift
-    settings:
-      base:
-        PRODUCT_NAME: NotchClickLowPowerHelper
-        PRODUCT_BUNDLE_IDENTIFIER: com.notchclick.app.lowpowerhelper
-        GENERATE_INFOPLIST_FILE: YES
-        SKIP_INSTALL: YES
       configs:
         debug:
           CODE_SIGN_IDENTITY: Apple Development

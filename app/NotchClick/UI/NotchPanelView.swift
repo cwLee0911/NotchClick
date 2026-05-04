@@ -3,7 +3,6 @@ import SwiftUI
 struct NotchPanelView: View {
     @EnvironmentObject var state:   AppState
     @EnvironmentObject var manager: NotchWindowManager
-    @ObservedObject private var quickSettingsVM = AppState.shared.quickSettingsVM
 
     private var isExpanded: Bool { manager.isExpanded }
 
@@ -57,64 +56,12 @@ struct NotchPanelView: View {
 
                 Spacer(minLength: 0)
             }
-
-            // Center popup — rendered below the panel when any card is active
-            if isExpanded, let popup = quickSettingsVM.activeCenterPopup {
-                centerPopupContent(for: popup)
-                    .frame(
-                        width:  popup.popupWidth,
-                        height: popup.popupHeight
-                    )
-                    .offset(
-                        x: popupOffsetX(for: popup),
-                        y: NotchDimensions.expandedHeight + NotchDimensions.centerPopupGap
-                    )
-                    .transition(.asymmetric(
-                        insertion: .opacity.combined(with: .offset(y: -8))
-                            .animation(.spring(response: 0.32, dampingFraction: 0.82)),
-                        removal: .opacity.animation(.easeOut(duration: 0.15))
-                    ))
-                    .id(popup)   // fresh transition when switching cards
-            }
         }
         .frame(
             width:  NotchDimensions.windowWidth,
             height: NotchDimensions.windowHeight,
             alignment: .top
         )
-    }
-
-    // MARK: Center popup dispatch
-
-    @ViewBuilder
-    private func centerPopupContent(for popup: CenterPopup) -> some View {
-        switch popup {
-        case .language:
-            LanguagePopupView(vm: quickSettingsVM)
-        }
-    }
-
-    /// Horizontal offset (from window center) so the popup lands under its
-    /// source card, clamped to stay inside the window bounds.
-    private func popupOffsetX(for popup: CenterPopup) -> CGFloat {
-        let windowW = NotchDimensions.windowWidth
-        let panelW  = NotchDimensions.expandedWidth
-        let popupW  = popup.popupWidth
-
-        let innerLeft: CGFloat = (windowW - panelW) / 2 + 14
-        let cardSpacing: CGFloat = 8
-        let innerWidth = panelW - 28
-        let cardCount = NotchDimensions.centerStatusCardCount
-        let totalSpacing = cardSpacing * (cardCount - 1)
-        let cardWidth = (innerWidth - totalSpacing) / cardCount
-        let cardCenterX =
-            innerLeft + cardWidth / 2 +
-            CGFloat(popup.cardIndex) * (cardWidth + cardSpacing)
-
-        var popupX = cardCenterX - popupW / 2
-        popupX = min(max(popupX, 8), windowW - popupW - 8)
-        // Convert from window-local x to an offset relative to window center.
-        return popupX + popupW / 2 - windowW / 2
     }
 
     // MARK: Panel Content
@@ -132,10 +79,6 @@ struct NotchPanelView: View {
                 switch state.selectedTab {
                 case .launcher:  LauncherView()      .environmentObject(state.launcherVM)
                 case .music:     MusicView()         .environmentObject(state.musicVM)
-                case .center:
-                    ControlCenterView()
-                        .environmentObject(state.quickSettingsVM)
-                        .environmentObject(state.systemVM)
                 }
             }
             .padding(.horizontal, 6)

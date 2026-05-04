@@ -4,7 +4,7 @@ struct MusicView: View {
     @EnvironmentObject var vm: MusicViewModel
 
     var body: some View {
-        VStack(spacing: 7) {
+        VStack(spacing: 5) {
             MusicProviderSwitch(
                 selectedProvider: vm.selectedProvider,
                 onSelect: vm.selectProvider
@@ -20,6 +20,9 @@ struct MusicView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear {
+            vm.restoreSavedProviderSelection()
+        }
     }
 
     @ViewBuilder
@@ -49,11 +52,11 @@ private struct MusicProviderSwitch: View {
             ForEach(MusicProvider.allCases) { provider in
                 Button(action: { onSelect(provider) }) {
                     Text(provider.title)
-                        .font(.system(size: 11.2, weight: .semibold))
+                        .font(.system(size: 10.8, weight: .semibold))
                         .foregroundStyle(selectedProvider == provider ? .white : .white.opacity(0.48))
                         .lineLimit(1)
                         .minimumScaleFactor(0.74)
-                        .frame(maxWidth: .infinity, minHeight: 28)
+                        .frame(maxWidth: .infinity, minHeight: 24)
                         .background(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .fill(segmentFill(for: provider))
@@ -66,7 +69,7 @@ private struct MusicProviderSwitch: View {
                 .buttonStyle(.plain)
             }
         }
-        .frame(height: 30)
+        .frame(height: 26)
     }
 
     private func segmentFill(for provider: MusicProvider) -> Color {
@@ -89,11 +92,11 @@ struct MusicProviderBadge: View {
 
     var body: some View {
         Text(provider.title.uppercased())
-            .font(.system(size: 7.5, weight: .bold))
+            .font(.system(size: 7, weight: .bold))
             .foregroundStyle(provider.accentColor.opacity(0.95))
             .kerning(1.0)
-            .padding(.horizontal, 9)
-            .padding(.vertical, 4)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
             .background(provider.accentColor.opacity(0.2), in: Capsule())
             .overlay(
                 Capsule()
@@ -133,26 +136,26 @@ private struct PlayerView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 ArtworkView(image: vm.artworkImage)
 
-                VStack(alignment: .leading, spacing: 7) {
+                VStack(alignment: .leading, spacing: 5) {
                     HStack(alignment: .top, spacing: 10) {
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 1) {
                             Text(track.name)
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.system(size: 12.2, weight: .semibold))
                                 .foregroundStyle(.white)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.78)
 
                             Text(track.artist)
-                                .font(.system(size: 11, weight: .medium))
+                                .font(.system(size: 10.2, weight: .medium))
                                 .foregroundStyle(.white.opacity(0.7))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
 
                             Text(track.album)
-                                .font(.system(size: 10))
+                                .font(.system(size: 9.2))
                                 .foregroundStyle(.white.opacity(0.42))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
@@ -165,7 +168,7 @@ private struct PlayerView: View {
                         }
                     }
 
-                    VStack(spacing: 3) {
+                    VStack(spacing: 2) {
                         ProgressBar(fraction: vm.progressFraction)
 
                         HStack {
@@ -180,7 +183,7 @@ private struct PlayerView: View {
                                 .foregroundStyle(.white.opacity(0.4))
                         }
                     }
-                    .padding(.bottom, 46)
+                    .padding(.bottom, 34)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -189,7 +192,7 @@ private struct PlayerView: View {
                 ControlPillButton(icon: "backward.fill") { vm.prevTrack() }
                 ControlPillButton(
                     icon: track.isPlaying ? "pause.fill" : "play.fill",
-                    size: 16,
+                    size: 14,
                     accent: vm.selectedProvider?.accentColor ?? .white
                 ) { vm.playPause() }
                 ControlPillButton(icon: "forward.fill") { vm.nextTrack() }
@@ -197,8 +200,8 @@ private struct PlayerView: View {
             .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .frame(height: 136)
+        .padding(.vertical, 8)
+        .frame(height: 112)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(MusicPanelSurface(accent: vm.selectedProvider?.accentColor))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -224,13 +227,13 @@ private struct ArtworkView: View {
                     }
             }
         }
-        .frame(width: 82, height: 82)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .frame(width: 68, height: 68)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .stroke(Color.white.opacity(0.09), lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.38), radius: 10, y: 6)
+        .shadow(color: .black.opacity(0.34), radius: 7, y: 4)
     }
 }
 
@@ -246,7 +249,7 @@ private struct ProgressBar: View {
                     .frame(width: geo.size.width * fraction)
             }
         }
-        .frame(height: 3.5)
+        .frame(height: 3)
     }
 }
 
@@ -262,7 +265,7 @@ private struct ControlPillButton: View {
             Image(systemName: icon)
                 .font(.system(size: size, weight: .semibold))
                 .foregroundStyle(accent.opacity(isHovered ? 1 : 0.9))
-                .frame(width: size > 14 ? 38 : 30, height: size > 14 ? 38 : 30)
+                .frame(width: size > 13 ? 32 : 28, height: size > 13 ? 32 : 28)
                 .background(
                     Circle()
                         .fill(Color.white.opacity(isHovered ? 0.12 : 0.06))

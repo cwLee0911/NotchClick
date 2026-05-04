@@ -10,20 +10,12 @@ enum NotchDimensions {
 
     // Expanded (panel)
     static let expandedWidth:  CGFloat = 540
-    static let expandedHeight: CGFloat = 280
-    static let expandedContentTopInset: CGFloat = 12
-
-    // Controls dropdown below the panel (Control-Center-style)
-    static let centerPopupWidth:  CGFloat = 280
-    static let centerPopupHeight: CGFloat = 310
-    static let centerStatusCardCount: CGFloat = 5
-    /// Vertical spacing between panel bottom and popup top.
-    /// Slight overlap keeps the dropdown visually attached without an outer shadow.
-    static let centerPopupGap:    CGFloat = -4
+    static let expandedHeight: CGFloat = 250
+    static let expandedContentTopInset: CGFloat = 10
 
     // Window always sized to the maximum extent (stays fixed; content morphs)
     static let windowWidth:  CGFloat = 600
-    static let windowHeight: CGFloat = expandedHeight + centerPopupGap + centerPopupHeight + 16
+    static let windowHeight: CGFloat = expandedHeight
 
     /// Measure the real notch from the screen and cache into notchWidth / notchHeight
     static func calibrate(from screen: NSScreen) {
@@ -174,7 +166,6 @@ final class NotchWindowManager: ObservableObject {
     private var workspaceObservers: [Any] = []
     private var visibilityWorkItem: DispatchWorkItem?
     private var isFullscreenTriggerDisabled = false
-    private var suppressOutsideClickHandling = false
     private var preferredScreenID: CGDirectDisplayID?
 
     // Tight hot zone: just the notch area itself
@@ -190,13 +181,6 @@ final class NotchWindowManager: ObservableObject {
         preferredScreenID = displayID(for: screen)
         NotchDimensions.calibrate(from: screen)
         panelWindow = NotchPanelWindow(screen: screen, manager: self)
-        AppState.shared.quickSettingsVM.protectedModalActionRunner = { [weak self] action in
-            guard let self else {
-                action()
-                return
-            }
-            self.performProtectedModalAction(action)
-        }
         rebuildZones(screen: screen)
         triggerWindow = NotchTriggerWindow(frame: clickZone, manager: self)
         startClickTracking()
@@ -217,7 +201,6 @@ final class NotchWindowManager: ObservableObject {
         stopWorkspaceTracking()
         visibilityWorkItem?.cancel()
         visibilityWorkItem = nil
-        AppState.shared.quickSettingsVM.protectedModalActionRunner = nil
         triggerWindow?.close()
         triggerWindow = nil
         panelWindow?.close()
@@ -232,12 +215,6 @@ final class NotchWindowManager: ObservableObject {
         }
 
         expand()
-    }
-
-    func performProtectedModalAction(_ action: () -> Void) {
-        suppressOutsideClickHandling = true
-        action()
-        suppressOutsideClickHandling = false
     }
 
     // MARK: Zones
@@ -266,47 +243,6 @@ final class NotchWindowManager: ObservableObject {
         )
     }
 
-    /// Screen-coord rect for the popup spawned by a Controls tab card of the
-    /// Controls tab. Shares the exact geometry used in NotchPanelView so the
-    /// hit-test lines up with what the user sees.
-    private func popupZone(for popup: CenterPopup, screen: NSScreen) -> NSRect {
-        let frame = screen.frame
-        let ew = NotchDimensions.expandedWidth
-        let panelLeft = frame.midX - ew / 2
-
-        // Card row geometry must stay in sync with NotchPanelView.popupOffsetX.
-        let innerLeft: CGFloat = panelLeft + 14
-        let cardSpacing: CGFloat = 8
-        let innerWidth = ew - 28
-        let cardCount = NotchDimensions.centerStatusCardCount
-        let totalSpacing = cardSpacing * (cardCount - 1)
-        let cardWidth = (innerWidth - totalSpacing) / cardCount
-        let cardCenterX =
-            innerLeft + cardWidth / 2 +
-            CGFloat(popup.cardIndex) * (cardWidth + cardSpacing)
-
-        let pw = popup.popupWidth
-        let ph = popup.popupHeight
-        let gap = NotchDimensions.centerPopupGap
-
-        // Clamp into the window's horizontal bounds so nothing renders outside.
-        let windowLeft  = frame.midX - NotchDimensions.windowWidth / 2
-        let windowRight = frame.midX + NotchDimensions.windowWidth / 2
-        var x = cardCenterX - pw / 2
-        x = min(max(x, windowLeft + 8), windowRight - pw - 8)
-
-        let y = expandedZone.minY - ph - gap
-        return NSRect(x: x, y: y, width: pw, height: ph)
-    }
-
-    private var activeCenterPopupZone: NSRect? {
-        guard
-            let popup = AppState.shared.quickSettingsVM.activeCenterPopup,
-            let screen = currentScreen
-        else { return nil }
-        return popupZone(for: popup, screen: screen)
-    }
-
     // MARK: Click Tracking
 
     private func startClickTracking() {
@@ -332,10 +268,6 @@ final class NotchWindowManager: ObservableObject {
     private func handleClick(_ event: NSEvent) {
         let loc = NSEvent.mouseLocation
 
-        if suppressOutsideClickHandling {
-            return
-        }
-
         guard isExpanded else {
             return
         }
@@ -346,15 +278,9 @@ final class NotchWindowManager: ObservableObject {
         }
 
         let insidePanel = expandedZone.insetBy(dx: -8, dy: -8).contains(loc)
-        let insidePopup = activeCenterPopupZone?.insetBy(dx: -8, dy: -8).contains(loc) ?? false
 
-        if !insidePanel && !insidePopup {
-            // Clicked outside both the panel and (if open) the active center popup — dismiss.
-            AppState.shared.quickSettingsVM.closeCenterPopup()
+        if !insidePanel {
             collapse()
-        } else if !insidePanel && insidePopup {
-            // Click was inside the popup; keep panel open.
-            return
         }
     }
 
@@ -591,7 +517,6 @@ final class NotchWindowManager: ObservableObject {
             return
         }
 
-        AppState.shared.quickSettingsVM.closeCenterPopup()
         AppState.shared.stopPolling()
         withAnimation(.spring(response: 0.3, dampingFraction: 0.86)) {
             isExpanded = false
