@@ -4,7 +4,7 @@
 
 NotchClick turns your MacBook's notch into a fast, native-feeling control panel.
 
-Click the notch once to access your favorite apps, music controls, system status,
+Click the notch once to access your favorite apps, music controls,
 and quick Mac settings -- all from one compact space at the top
 of your screen.
 
@@ -18,16 +18,7 @@ Move your cursor away, and it quietly folds back into the notch.
 
 - **Control your music**  
   See what's playing and control Apple Music or Spotify.
-
-- **Monitor your Mac**  
-  See CPU, memory, storage, battery, and system status at a glance.
-
-- **Switch language quickly**  
-  Access language controls without opening macOS settings.
-
-- **Toggle Low Power Mode**  
-  Turn Low Power Mode on or off from the System panel.
-
+  
 ---
 
 ## System Requirements
@@ -55,18 +46,4 @@ Direct download:
 
 ```text
 https://cwlee0911.github.io/NotchClick/downloads/NotchClick.dmg
-```
-
----
-
-## Low Power Mode permission
-
-The first time you toggle Low Power Mode, macOS asks for your administrator
-password.
-
-NotchClick uses this once to allow only these exact system commands:
-
-```bash
-/usr/bin/pmset -a lowpowermode 0
-/usr/bin/pmset -a lowpowermode 1
 ```
