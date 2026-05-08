@@ -16,7 +16,22 @@ struct AppItem: Identifiable, Codable, Hashable {
     }
 
     var icon: NSImage {
-        NSWorkspace.shared.icon(forFile: bundleURL.path)
+        AppIconCache.icon(for: bundleURL)
+    }
+}
+
+private enum AppIconCache {
+    private static let cache = NSCache<NSString, NSImage>()
+
+    static func icon(for url: URL) -> NSImage {
+        let key = url.path as NSString
+        if let cached = cache.object(forKey: key) {
+            return cached
+        }
+
+        let image = NSWorkspace.shared.icon(forFile: url.path)
+        cache.setObject(image, forKey: key)
+        return image
     }
 }
 

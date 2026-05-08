@@ -27,8 +27,8 @@ targets:
     info:
       path: app/NotchClick/Info.plist
       properties:
-        CFBundleShortVersionString: "1.0.1"
-        CFBundleVersion: "3"
+        CFBundleShortVersionString: "1.0.2"
+        CFBundleVersion: "4"
         LSUIElement: true
         LSApplicationCategoryType: "public.app-category.utilities"
         NSAppleEventsUsageDescription: "NotchClick uses Apple Events only to control playback in Apple Music or Spotify after you choose a player."

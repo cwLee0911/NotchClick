@@ -1,6 +1,5 @@
 import AppKit
 import Combine
-import UniformTypeIdentifiers
 
 class LauncherViewModel: ObservableObject {
     @Published var apps: [AppItem] = []
@@ -77,32 +76,9 @@ class LauncherViewModel: ObservableObject {
         save()
     }
 
-    func chooseAppFromDisk() {
-        let panel = NSOpenPanel()
-        let languageCode = UserPreferences.shared.language
-        panel.title = L10n.tr(.chooseApp, languageCode)
-        panel.prompt = L10n.tr(.addApp, languageCode)
-        panel.canChooseDirectories = false
-        panel.canChooseFiles = true
-        panel.allowsMultipleSelection = false
-        panel.allowedContentTypes = [.application]
-
-        let response = panel.runModal()
-        NSApp.activate(ignoringOtherApps: true)
-
-        guard response == .OK, let url = panel.url else { return }
-        add(AppItem(name: appName(for: url), bundleURL: url))
-    }
-
     func remove(at offsets: IndexSet) {
         reloadFromStorageIfChanged()
         apps.remove(atOffsets: offsets)
-        save()
-    }
-
-    func move(from source: IndexSet, to destination: Int) {
-        reloadFromStorageIfChanged()
-        apps.move(fromOffsets: source, toOffset: destination)
         save()
     }
 

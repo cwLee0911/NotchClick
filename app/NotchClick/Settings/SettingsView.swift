@@ -23,18 +23,20 @@ struct SettingsView: View {
 private struct GeneralTab: View {
     @ObservedObject var prefs: UserPreferences
     @ObservedObject var appState: AppState
-    @State private var isSyncingLaunchAtLogin = false
+    @State private var isLaunchAtLoginEnabled = UserPreferences.shared.launchAtLogin
     @State private var launchAtLoginStatusMessage: String?
     @AppStorage("nd_language") private var languageCode = AppLanguage.defaultCode
 
     var body: some View {
         Form {
             Section(L10n.tr(.behavior, languageCode)) {
-                Toggle(L10n.tr(.launchAtLogin, languageCode), isOn: $prefs.launchAtLogin)
-                    .onChange(of: prefs.launchAtLogin) { enabled in
-                        guard !isSyncingLaunchAtLogin else { return }
-                        toggleLoginItem(enabled)
-                    }
+                Toggle(
+                    L10n.tr(.launchAtLogin, languageCode),
+                    isOn: Binding(
+                        get: { isLaunchAtLoginEnabled },
+                        set: { toggleLoginItem($0) }
+                    )
+                )
                     .onAppear(perform: syncLaunchAtLoginStatus)
 
                 Picker(L10n.tr(.defaultTab, languageCode), selection: $prefs.defaultTab) {
@@ -65,45 +67,95 @@ private struct GeneralTab: View {
     }
 
     private func toggleLoginItem(_ enable: Bool) {
-        if #available(macOS 13.0, *) {
-            do {
-                if enable {
-                    try SMAppService.mainApp.register()
-                } else {
-                    try SMAppService.mainApp.unregister()
-                }
-                syncLaunchAtLoginStatus()
-            } catch {
-                syncLaunchAtLoginStatus()
-                if launchAtLoginStatusMessage == nil {
-                    launchAtLoginStatusMessage = L10n.tr(.launchAtLoginUpdateFailed, languageCode)
-                }
-            }
-        }
+        let snapshot = LaunchAtLoginService.setEnabled(enable, languageCode: languageCode)
+        isLaunchAtLoginEnabled = snapshot.isEnabled
+        prefs.launchAtLogin = snapshot.isEnabled
+        launchAtLoginStatusMessage = snapshot.message
     }
 
     private func syncLaunchAtLoginStatus() {
-        guard #available(macOS 13.0, *) else { return }
+        let snapshot = LaunchAtLoginService.currentSnapshot(languageCode: languageCode)
+        isLaunchAtLoginEnabled = snapshot.isEnabled
+        prefs.launchAtLogin = snapshot.isEnabled
+        launchAtLoginStatusMessage = snapshot.message
+    }
+}
 
-        isSyncingLaunchAtLogin = true
-        defer { isSyncingLaunchAtLogin = false }
+struct LaunchAtLoginSnapshot {
+    let isEnabled: Bool
+    let message: String?
+}
+
+enum LaunchAtLoginService {
+    static func currentSnapshot(languageCode: String) -> LaunchAtLoginSnapshot {
+        guard #available(macOS 13.0, *) else {
+            return LaunchAtLoginSnapshot(
+                isEnabled: false,
+                message: L10n.tr(.launchAtLoginUnavailable, languageCode)
+            )
+        }
 
         switch SMAppService.mainApp.status {
         case .enabled:
-            prefs.launchAtLogin = true
-            launchAtLoginStatusMessage = nil
+            return LaunchAtLoginSnapshot(isEnabled: true, message: nil)
         case .requiresApproval:
-            prefs.launchAtLogin = true
-            launchAtLoginStatusMessage = L10n.tr(.launchAtLoginNeedsApproval, languageCode)
+            return LaunchAtLoginSnapshot(
+                isEnabled: true,
+                message: L10n.tr(.launchAtLoginNeedsApproval, languageCode)
+            )
         case .notRegistered:
-            prefs.launchAtLogin = false
-            launchAtLoginStatusMessage = nil
+            return LaunchAtLoginSnapshot(isEnabled: false, message: nil)
         case .notFound:
-            prefs.launchAtLogin = false
-            launchAtLoginStatusMessage = L10n.tr(.launchAtLoginUnavailable, languageCode)
+            return LaunchAtLoginSnapshot(
+                isEnabled: false,
+                message: L10n.tr(.launchAtLoginUnavailable, languageCode)
+            )
         @unknown default:
-            launchAtLoginStatusMessage = L10n.tr(.launchAtLoginStatusUnknown, languageCode)
+            return LaunchAtLoginSnapshot(
+                isEnabled: UserPreferences.shared.launchAtLogin,
+                message: L10n.tr(.launchAtLoginStatusUnknown, languageCode)
+            )
         }
+    }
+
+    static func setEnabled(_ enabled: Bool, languageCode: String) -> LaunchAtLoginSnapshot {
+        guard #available(macOS 13.0, *) else {
+            return currentSnapshot(languageCode: languageCode)
+        }
+
+        do {
+            switch (enabled, SMAppService.mainApp.status) {
+            case (true, .enabled), (true, .requiresApproval),
+                 (false, .notRegistered), (false, .notFound):
+                break
+            case (true, _):
+                try SMAppService.mainApp.register()
+            case (false, _):
+                try SMAppService.mainApp.unregister()
+            }
+        } catch {
+            let snapshot = currentSnapshot(languageCode: languageCode)
+            return LaunchAtLoginSnapshot(
+                isEnabled: snapshot.isEnabled,
+                message: snapshot.message ?? L10n.tr(.launchAtLoginUpdateFailed, languageCode)
+            )
+        }
+
+        return currentSnapshot(languageCode: languageCode)
+    }
+
+    static func reconcileStoredPreference() {
+        guard #available(macOS 13.0, *) else {
+            UserPreferences.shared.launchAtLogin = false
+            return
+        }
+
+        if UserPreferences.shared.launchAtLogin && SMAppService.mainApp.status == .notRegistered {
+            try? SMAppService.mainApp.register()
+        }
+
+        let snapshot = currentSnapshot(languageCode: UserPreferences.shared.language)
+        UserPreferences.shared.launchAtLogin = snapshot.isEnabled
     }
 }
 

@@ -14,13 +14,6 @@ enum MusicProvider: String, CaseIterable, Identifiable {
         }
     }
 
-    var subtitle: String {
-        switch self {
-        case .appleMusic: return "Built into macOS"
-        case .spotify:    return "Control the Spotify app"
-        }
-    }
-
     var symbolName: String {
         switch self {
         case .appleMusic: return "music.note"
@@ -32,13 +25,6 @@ enum MusicProvider: String, CaseIterable, Identifiable {
         switch self {
         case .appleMusic: return Color(red: 1.0, green: 0.27, blue: 0.45)
         case .spotify:    return Color(red: 0.18, green: 0.8, blue: 0.44)
-        }
-    }
-
-    var openActionTitle: String {
-        switch self {
-        case .appleMusic: return "Open Music"
-        case .spotify:    return "Open Spotify"
         }
     }
 }
@@ -104,13 +90,6 @@ final class MusicViewModel: ObservableObject {
         } else {
             refreshNow()
         }
-    }
-
-    func clearProviderSelection() {
-        selectedProvider = nil
-        resetPlaybackState()
-        timer?.invalidate()
-        timer = nil
     }
 
     // MARK: Polling
@@ -235,35 +214,6 @@ final class MusicViewModel: ObservableObject {
 
     var formattedPosition: String { formatTime(track?.position ?? 0) }
     var formattedDuration: String { formatTime(track?.duration ?? 0) }
-
-    var providerStatusTitle: String {
-        guard let provider = selectedProvider else {
-            return "Choose a Music App"
-        }
-
-        if let track {
-            return track.name
-        }
-
-        return isSelectedAppRunning ? provider.title : "\(provider.title) Isn't Running"
-    }
-
-    var providerStatusSubtitle: String {
-        guard let provider = selectedProvider else {
-            return "Pick Apple Music or Spotify to control playback from the notch."
-        }
-
-        if let track {
-            let album = track.album.trimmingCharacters(in: .whitespacesAndNewlines)
-            return album.isEmpty ? track.artist : "\(track.artist) • \(album)"
-        }
-
-        if isSelectedAppRunning {
-            return "Start playback in \(provider.title) and the player will appear here."
-        }
-
-        return "Open \(provider.title) to connect the player controls."
-    }
 
     private var activeBridge: MusicAppBridge? {
         selectedProvider.map(bridge(for:))

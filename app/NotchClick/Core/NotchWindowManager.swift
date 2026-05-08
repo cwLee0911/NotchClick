@@ -168,8 +168,6 @@ final class NotchWindowManager: ObservableObject {
     private var isFullscreenTriggerDisabled = false
     private var preferredScreenID: CGDirectDisplayID?
 
-    // Tight hot zone: just the notch area itself
-    private var notchZone: NSRect = .zero
     // Click zone aligned with the full visible collapsed notch.
     private var clickZone: NSRect = .zero
     // Expanded zone: where the panel extends when open
@@ -199,6 +197,11 @@ final class NotchWindowManager: ObservableObject {
     func teardown() {
         stopClickTracking()
         stopWorkspaceTracking()
+        NotificationCenter.default.removeObserver(
+            self,
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
         visibilityWorkItem?.cancel()
         visibilityWorkItem = nil
         triggerWindow?.close()
@@ -224,14 +227,12 @@ final class NotchWindowManager: ObservableObject {
         let nw   = NotchDimensions.notchWidth
         let nh   = NotchDimensions.notchHeight
 
-        notchZone = NSRect(
+        clickZone = NSRect(
             x: frame.midX - (nw / 2),
             y: frame.maxY - nh,
             width: nw,
             height: nh
         )
-
-        clickZone = notchZone
 
         let ew = NotchDimensions.expandedWidth
         let eh = NotchDimensions.expandedHeight

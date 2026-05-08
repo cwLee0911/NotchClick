@@ -69,8 +69,30 @@ struct NotchPanelView: View {
     @ViewBuilder
     private var panelContent: some View {
         VStack(spacing: 0) {
-            TabBarView()
-                .environmentObject(state)
+            HStack(spacing: 8) {
+                TabBarView()
+                    .environmentObject(state)
+
+                Button {
+                    NotificationCenter.default.post(name: .notchClickOpenSettings, object: nil)
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color.white.opacity(0.68))
+                        .frame(width: 32, height: 32)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.white.opacity(0.08))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+                .help("Settings")
+            }
+            .padding(.horizontal, 6)
 
             Divider()
                 .background(Color.white.opacity(0.08))

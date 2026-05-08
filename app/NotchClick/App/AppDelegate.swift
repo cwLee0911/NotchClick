@@ -1,6 +1,10 @@
 import AppKit
 import SwiftUI
 
+extension Notification.Name {
+    static let notchClickOpenSettings = Notification.Name("NotchClickOpenSettings")
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowManager: NotchWindowManager?
     private var statusItem: NSStatusItem?
@@ -12,25 +16,42 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         windowManager = NotchWindowManager()
         windowManager?.setup()
         setupStatusItem()
+        LaunchAtLoginService.reconcileStoredPreference()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(openSettings),
+            name: .notchClickOpenSettings,
+            object: nil
+        )
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        NotificationCenter.default.removeObserver(self)
         statusItem = nil
         windowManager?.teardown()
     }
 
     private func setupStatusItem() {
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(
-            systemSymbolName: "rectangle.topthird.inset.filled",
-            accessibilityDescription: "NotchClick"
-        ) ?? NSImage(systemSymbolName: "rectangle", accessibilityDescription: "NotchClick")
-        item.button?.image?.isTemplate = true
-        item.button?.toolTip = "NotchClick"
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        if let button = item.button {
+            button.image = NSImage(
+                systemSymbolName: "rectangle.topthird.inset.filled",
+                accessibilityDescription: "NotchClick"
+            ) ?? NSImage(systemSymbolName: "rectangle", accessibilityDescription: "NotchClick")
+            button.image?.isTemplate = true
+            button.imagePosition = .imageLeft
+            button.title = " NotchClick"
+            button.toolTip = "NotchClick"
+        }
 
         let menu = NSMenu()
+        menu.autoenablesItems = false
         menu.addItem(NSMenuItem(
-            title: "Open NotchClick",
+            title: "Open Panel",
             action: #selector(openNotchClick),
             keyEquivalent: ""
         ))
@@ -66,8 +87,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             )
             let window = NSWindow(contentViewController: controller)
             window.title = "NotchClick Settings"
-            window.styleMask = [.titled, .closable, .miniaturizable]
+            window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             window.isReleasedWhenClosed = false
+            window.minSize = NSSize(width: 460, height: 340)
+            window.setFrameAutosaveName("NotchClick Settings")
             window.center()
             settingsWindow = window
         }

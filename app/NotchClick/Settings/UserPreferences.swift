@@ -32,8 +32,6 @@ final class UserPreferences: ObservableObject {
     }
 
     @AppStorage("nd_launch_at_login") var launchAtLogin = false
-    @AppStorage("nd_hover_delay") var hoverDelay = 0.18
-    @AppStorage("nd_dismiss_delay") var dismissDelay = 0.4
     @AppStorage("nd_default_tab") var defaultTab = "Launcher"
     @AppStorage("nd_music_provider") var musicProvider = ""
     @AppStorage("nd_language") var language = AppLanguage.defaultCode
@@ -65,7 +63,6 @@ enum L10n {
         case addAppHelp, launcherFullHelp
         case setMusicApp, chooseMusicApp
         case openMusic, openSpotify
-        case appleMusicSubtitle, spotifySubtitle
         case appNotRunning, nothingPlaying, permissionNeeded
         case appNotRunningMessage, nothingPlayingMessage
         case general, about, behavior, launchAtLogin, defaultTab
@@ -89,8 +86,6 @@ enum L10n {
         case .chooseMusicApp: return "Choose Apple Music or Spotify above, then this screen will switch to that player automatically."
         case .openMusic: return "Open Music"
         case .openSpotify: return "Open Spotify"
-        case .appleMusicSubtitle: return "Built into macOS"
-        case .spotifySubtitle: return "Control the Spotify app"
         case .appNotRunning: return "isn't running"
         case .nothingPlaying: return "Nothing playing"
         case .permissionNeeded: return "Permission needed"
@@ -127,13 +122,6 @@ enum L10n {
 }
 
 extension MusicProvider {
-    func localizedSubtitle(_ languageCode: String) -> String {
-        switch self {
-        case .appleMusic: return L10n.tr(.appleMusicSubtitle, languageCode)
-        case .spotify: return L10n.tr(.spotifySubtitle, languageCode)
-        }
-    }
-
     func localizedOpenActionTitle(_ languageCode: String) -> String {
         switch self {
         case .appleMusic: return L10n.tr(.openMusic, languageCode)
