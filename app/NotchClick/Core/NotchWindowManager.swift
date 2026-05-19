@@ -4,9 +4,18 @@ import SwiftUI
 // MARK: - Dimensions
 
 enum NotchDimensions {
+    private static let defaultNotchWidth: CGFloat = 185
+    private static let defaultNotchHeight: CGFloat = 32
+    static let triggerHorizontalPadding: CGFloat = 36
+    static let triggerExtraHeight: CGFloat = 12
+    static let minimumTriggerWidth: CGFloat = 240
+    static let minimumTriggerHeight: CGFloat = 44
+    static let expandedClickToleranceX: CGFloat = 24
+    static let expandedClickToleranceY: CGFloat = 16
+
     // Collapsed — matches the real notch exactly when possible
-    static var notchWidth:  CGFloat = 185
-    static var notchHeight: CGFloat = 32
+    static var notchWidth:  CGFloat = defaultNotchWidth
+    static var notchHeight: CGFloat = defaultNotchHeight
 
     // Expanded (panel)
     static let expandedWidth:  CGFloat = 540
@@ -19,19 +28,30 @@ enum NotchDimensions {
 
     /// Measure the real notch from the screen and cache into notchWidth / notchHeight
     static func calibrate(from screen: NSScreen) {
+        notchWidth = defaultNotchWidth
+        notchHeight = defaultNotchHeight
+
         let topInset = screen.safeAreaInsets.top
-        guard topInset > 0 else {
-            notchWidth  = 185
-            notchHeight = 32
+        guard topInset > 0 else { return }
+
+        if (20...90).contains(topInset) {
+            notchHeight = topInset
+        }
+
+        guard
+            let leftArea = screen.auxiliaryTopLeftArea,
+            let rightArea = screen.auxiliaryTopRightArea
+        else {
             return
         }
-        notchHeight = topInset
 
-        // The actual notch width = total screen width − (left menu area + right menu area)
-        let leftMaxX  = screen.auxiliaryTopLeftArea?.maxX  ?? 0
-        let rightMinX = screen.auxiliaryTopRightArea?.minX ?? screen.frame.width
-        let measured  = rightMinX - leftMaxX
-        notchWidth    = measured > 100 ? measured : 185
+        // The actual notch width is the gap between the two safe menu-bar areas.
+        // Ignore implausible values so non-notched displays do not become a full-width trigger.
+        let measured = rightArea.minX - leftArea.maxX
+        let maximumPlausibleWidth = min(CGFloat(420), screen.frame.width * 0.35)
+        if measured >= 120, measured <= maximumPlausibleWidth {
+            notchWidth = measured
+        }
     }
 }
 
@@ -164,11 +184,11 @@ final class NotchWindowManager: ObservableObject {
     private var globalMonitor: Any?
     private var localMonitor: Any?
     private var workspaceObservers: [Any] = []
-    private var visibilityWorkItem: DispatchWorkItem?
-    private var isFullscreenTriggerDisabled = false
     private var preferredScreenID: CGDirectDisplayID?
 
-    // Click zone aligned with the full visible collapsed notch.
+    // Visible notch shape. Kept exact so clicking the top strip toggles closed when expanded.
+    private var visibleNotchZone: NSRect = .zero
+    // Trigger zone. Slightly larger than the visible notch so opening is forgiving.
     private var clickZone: NSRect = .zero
     // Expanded zone: where the panel extends when open
     private var expandedZone: NSRect = .zero
@@ -183,8 +203,7 @@ final class NotchWindowManager: ObservableObject {
         triggerWindow = NotchTriggerWindow(frame: clickZone, manager: self)
         startClickTracking()
         startWorkspaceTracking()
-        refreshWindowVisibility(hideCollapsedImmediately: true)
-        updateEnvironmentState(hideCollapsedImmediately: true)
+        refreshWindowVisibility()
 
         NotificationCenter.default.addObserver(
             self,
@@ -202,8 +221,6 @@ final class NotchWindowManager: ObservableObject {
             name: NSApplication.didChangeScreenParametersNotification,
             object: nil
         )
-        visibilityWorkItem?.cancel()
-        visibilityWorkItem = nil
         triggerWindow?.close()
         triggerWindow = nil
         panelWindow?.close()
@@ -214,7 +231,7 @@ final class NotchWindowManager: ObservableObject {
         AppState.shared.launcherVM.reloadFromStorageIfChanged()
 
         if let screen = screenContaining(point: NSEvent.mouseLocation) ?? triggerWindow?.screen {
-            moveWindows(to: screen, hideCollapsedImmediately: true)
+            moveWindows(to: screen)
         }
 
         expand()
@@ -227,11 +244,31 @@ final class NotchWindowManager: ObservableObject {
         let nw   = NotchDimensions.notchWidth
         let nh   = NotchDimensions.notchHeight
 
-        clickZone = NSRect(
+        visibleNotchZone = NSRect(
             x: frame.midX - (nw / 2),
             y: frame.maxY - nh,
             width: nw,
             height: nh
+        )
+
+        let triggerWidth = min(
+            frame.width,
+            max(nw + (NotchDimensions.triggerHorizontalPadding * 2), NotchDimensions.minimumTriggerWidth)
+        )
+        let triggerHeight = max(
+            nh + NotchDimensions.triggerExtraHeight,
+            NotchDimensions.minimumTriggerHeight
+        )
+        let triggerX = min(
+            max(frame.midX - (triggerWidth / 2), frame.minX),
+            frame.maxX - triggerWidth
+        )
+
+        clickZone = NSRect(
+            x: triggerX,
+            y: frame.maxY - triggerHeight,
+            width: triggerWidth,
+            height: triggerHeight
         )
 
         let ew = NotchDimensions.expandedWidth
@@ -273,12 +310,17 @@ final class NotchWindowManager: ObservableObject {
             return
         }
 
-        if event.type == .leftMouseDown && clickZone.contains(loc) {
+        if event.type == .leftMouseDown && visibleNotchZone.contains(loc) {
             collapse()
             return
         }
 
-        let insidePanel = expandedZone.insetBy(dx: -8, dy: -8).contains(loc)
+        let insidePanel = expandedZone
+            .insetBy(
+                dx: -NotchDimensions.expandedClickToleranceX,
+                dy: -NotchDimensions.expandedClickToleranceY
+            )
+            .contains(loc)
 
         if !insidePanel {
             collapse()
@@ -333,26 +375,15 @@ final class NotchWindowManager: ObservableObject {
         return panelWindow?.screen ?? triggerWindow?.screen ?? defaultScreen
     }
 
-    private func updateEnvironmentState(hideCollapsedImmediately: Bool = false) {
-        guard let screen = currentScreen else { return }
-
-        isFullscreenTriggerDisabled = detectFullscreenWindow(on: screen)
-
-        if isFullscreenTriggerDisabled && isExpanded {
-            collapse()
-            return
-        }
-
-        refreshWindowVisibility(
-            hideCollapsedImmediately: hideCollapsedImmediately || (isFullscreenTriggerDisabled && !isExpanded)
-        )
+    private func updateEnvironmentState() {
+        refreshWindowVisibility()
     }
 
     private func handleActiveSpaceDidChange() {
         AppState.shared.launcherVM.reloadFromStorageIfChanged()
 
         if let screen = screenContaining(point: NSEvent.mouseLocation) ?? currentScreen ?? defaultScreen {
-            moveWindows(to: screen, hideCollapsedImmediately: true)
+            moveWindows(to: screen)
         } else {
             handleWorkspaceVisibilityChange()
         }
@@ -379,51 +410,6 @@ final class NotchWindowManager: ObservableObject {
         triggerWindow?.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenAuxiliary]
     }
 
-    private func detectFullscreenWindow(on screen: NSScreen) -> Bool {
-        guard let app = NSWorkspace.shared.frontmostApplication else {
-            return false
-        }
-
-        guard let infoList = CGWindowListCopyWindowInfo(
-            [.optionOnScreenOnly, .excludeDesktopElements],
-            kCGNullWindowID
-        ) as? [[String: Any]] else {
-            return false
-        }
-
-        let screenFrame = screen.frame
-        let tolerance: CGFloat = 6
-
-        for info in infoList {
-            let ownerPID = info[kCGWindowOwnerPID as String] as? pid_t ?? 0
-            let layer = info[kCGWindowLayer as String] as? Int ?? 0
-            let alpha = info[kCGWindowAlpha as String] as? Double ?? 1
-
-            guard ownerPID == app.processIdentifier, layer == 0, alpha > 0 else {
-                continue
-            }
-
-            guard
-                let boundsInfo = info[kCGWindowBounds as String] as? NSDictionary,
-                let bounds = CGRect(dictionaryRepresentation: boundsInfo)
-            else {
-                continue
-            }
-
-            let fillsScreen =
-                abs(bounds.minX - screenFrame.minX) <= tolerance &&
-                abs(bounds.minY - screenFrame.minY) <= tolerance &&
-                abs(bounds.width - screenFrame.width) <= tolerance &&
-                abs(bounds.height - screenFrame.height) <= tolerance
-
-            if fillsScreen {
-                return true
-            }
-        }
-
-        return false
-    }
-
     private func screenContaining(point: NSPoint) -> NSScreen? {
         NSScreen.screens.first { NSMouseInRect(point, $0.frame, false) }
     }
@@ -440,7 +426,7 @@ final class NotchWindowManager: ObservableObject {
         }
     }
 
-    private func moveWindows(to screen: NSScreen, hideCollapsedImmediately: Bool) {
+    private func moveWindows(to screen: NSScreen) {
         preferredScreenID = displayID(for: screen)
         NotchDimensions.calibrate(from: screen)
         rebuildZones(screen: screen)
@@ -450,13 +436,10 @@ final class NotchWindowManager: ObservableObject {
         }
 
         triggerWindow?.setFrame(clickZone, display: true)
-        updateEnvironmentState(hideCollapsedImmediately: hideCollapsedImmediately)
+        updateEnvironmentState()
     }
 
-    private func refreshWindowVisibility(hideCollapsedImmediately: Bool = false) {
-        visibilityWorkItem?.cancel()
-        visibilityWorkItem = nil
-
+    private func refreshWindowVisibility() {
         guard let panelWindow, let triggerWindow else { return }
 
         panelWindow.ignoresMouseEvents = !isExpanded
@@ -467,38 +450,15 @@ final class NotchWindowManager: ObservableObject {
             return
         }
 
-        if isFullscreenTriggerDisabled {
-            triggerWindow.orderOut(nil)
-
-            if hideCollapsedImmediately {
-                panelWindow.orderOut(nil)
-                return
-            }
-
-            let workItem = DispatchWorkItem { [weak self] in
-                guard let self, !self.isExpanded, self.isFullscreenTriggerDisabled else { return }
-                self.panelWindow?.orderOut(nil)
-            }
-            visibilityWorkItem = workItem
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18, execute: workItem)
-        } else {
-            panelWindow.orderFrontRegardless()
-            triggerWindow.setFrame(clickZone, display: true)
-            triggerWindow.orderFrontRegardless()
-        }
+        panelWindow.orderFrontRegardless()
+        triggerWindow.setFrame(clickZone, display: true)
+        triggerWindow.orderFrontRegardless()
     }
 
     // MARK: Expand / Collapse
 
     private func expand() {
         guard !isExpanded else { return }
-
-        if isFullscreenTriggerDisabled {
-            return
-        }
-
-        visibilityWorkItem?.cancel()
-        visibilityWorkItem = nil
 
         panelWindow?.makeKeyAndOrderFront(nil)
         panelWindow?.ignoresMouseEvents = false
@@ -514,7 +474,7 @@ final class NotchWindowManager: ObservableObject {
 
     private func collapse() {
         guard isExpanded else {
-            refreshWindowVisibility(hideCollapsedImmediately: true)
+            refreshWindowVisibility()
             return
         }
 
@@ -530,6 +490,6 @@ final class NotchWindowManager: ObservableObject {
 
     @objc private func screensChanged() {
         guard let screen = currentScreen ?? defaultScreen else { return }
-        moveWindows(to: screen, hideCollapsedImmediately: true)
+        moveWindows(to: screen)
     }
 }
