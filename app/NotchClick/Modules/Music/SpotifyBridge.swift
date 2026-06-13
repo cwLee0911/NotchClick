@@ -173,10 +173,34 @@ private struct MusicScriptResult {
 }
 
 private enum MusicScriptRunner {
+    /// `NSAppleScript` is not thread-safe and must be driven from the main thread.
+    /// Callers may invoke this from any queue, so marshal onto main when needed.
     static func runScript(_ source: String) -> MusicScriptResult {
+        if Thread.isMainThread {
+            return executeOnMain(source)
+        }
+        return DispatchQueue.main.sync { executeOnMain(source) }
+    }
+
+    /// Compiled scripts are cached and reused so each 2s poll doesn't recompile
+    /// AppleScript on the main thread. Main-thread only (guarded by `runScript`).
+    private static var scriptCache: [String: NSAppleScript] = [:]
+
+    private static func executeOnMain(_ source: String) -> MusicScriptResult {
+        dispatchPrecondition(condition: .onQueue(.main))
+
+        let script: NSAppleScript
+        if let cached = scriptCache[source] {
+            script = cached
+        } else if let compiled = NSAppleScript(source: source) {
+            scriptCache[source] = compiled
+            script = compiled
+        } else {
+            return MusicScriptResult(output: nil, errorCode: nil, errorMessage: nil)
+        }
+
         var error: NSDictionary?
-        let script = NSAppleScript(source: source)
-        let result = script?.executeAndReturnError(&error)
+        let result = script.executeAndReturnError(&error)
 
         if let error {
             return MusicScriptResult(
@@ -187,7 +211,7 @@ private enum MusicScriptRunner {
         }
 
         return MusicScriptResult(
-            output: result?.stringValue,
+            output: result.stringValue,
             errorCode: nil,
             errorMessage: nil
         )

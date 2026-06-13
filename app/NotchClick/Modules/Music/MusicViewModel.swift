@@ -45,12 +45,6 @@ final class MusicViewModel: ObservableObject {
     private var isPolling = false
     private var artworkURL: URL?
     private var artworkTask: Task<Void, Never>?
-    private let fetchLock = NSLock()
-    private var fetchInFlight = false
-    private let pollingQueue = DispatchQueue(
-        label: "com.notchclick.music-monitor",
-        qos: .userInitiated
-    )
 
     init() {
         selectedProvider = MusicProvider.fromStored(UserPreferences.shared.musicProvider)
@@ -112,60 +106,39 @@ final class MusicViewModel: ObservableObject {
         isPolling = false
         timer?.invalidate()
         timer = nil
-        fetchLock.lock()
-        fetchInFlight = false
-        fetchLock.unlock()
     }
 
     func refreshNow() {
         fetchTrack()
     }
 
+    /// Runs on the main thread: the underlying `NSAppleScript` is not thread-safe, and
+    /// because the main run loop is serial there is no overlapping-fetch to guard against.
+    /// Only the artwork download (below) is moved off the main thread.
     private func fetchTrack() {
         guard let bridge = activeBridge else {
-            DispatchQueue.main.async { [weak self] in
-                self?.resetPlaybackState()
-            }
+            resetPlaybackState()
             return
         }
-
-        fetchLock.lock()
-        guard !fetchInFlight else {
-            fetchLock.unlock()
-            return
-        }
-        fetchInFlight = true
-        fetchLock.unlock()
 
         let provider = selectedProvider
-        pollingQueue.async { [weak self] in
-            guard let self else { return }
-            let isRunning = bridge.isRunning
-            let snapshot = bridge.currentTrackSnapshot()
-            let newTrack = snapshot.track
+        let isRunning = bridge.isRunning
+        let snapshot = bridge.currentTrackSnapshot()
 
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                defer {
-                    self.fetchLock.lock()
-                    self.fetchInFlight = false
-                    self.fetchLock.unlock()
-                }
-                guard self.selectedProvider == provider else { return }
+        guard selectedProvider == provider else { return }
 
-                self.isSelectedAppRunning = isRunning
-                self.track = newTrack
-                self.errorMessage = snapshot.errorMessage
+        let newTrack = snapshot.track
+        isSelectedAppRunning = isRunning
+        track = newTrack
+        errorMessage = snapshot.errorMessage
 
-                if newTrack?.artworkURL != self.artworkURL {
-                    self.artworkURL = newTrack?.artworkURL
-                    self.loadArtwork(from: newTrack?.artworkURL)
-                }
+        if newTrack?.artworkURL != artworkURL {
+            artworkURL = newTrack?.artworkURL
+            loadArtwork(from: newTrack?.artworkURL)
+        }
 
-                if newTrack?.artworkURL == nil {
-                    self.artworkImage = nil
-                }
-            }
+        if newTrack?.artworkURL == nil {
+            artworkImage = nil
         }
     }
 

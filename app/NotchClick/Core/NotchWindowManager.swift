@@ -26,23 +26,23 @@ enum NotchDimensions {
     static let windowWidth:  CGFloat = 600
     static let windowHeight: CGFloat = expandedHeight
 
-    /// Measure the real notch from the screen and cache into notchWidth / notchHeight
-    static func calibrate(from screen: NSScreen) {
-        notchWidth = defaultNotchWidth
-        notchHeight = defaultNotchHeight
+    /// Measure the real notch for a screen *without* mutating shared state.
+    static func notchSize(for screen: NSScreen) -> (width: CGFloat, height: CGFloat) {
+        var width = defaultNotchWidth
+        var height = defaultNotchHeight
 
         let topInset = screen.safeAreaInsets.top
-        guard topInset > 0 else { return }
+        guard topInset > 0 else { return (width, height) }
 
         if (20...90).contains(topInset) {
-            notchHeight = topInset
+            height = topInset
         }
 
         guard
             let leftArea = screen.auxiliaryTopLeftArea,
             let rightArea = screen.auxiliaryTopRightArea
         else {
-            return
+            return (width, height)
         }
 
         // The actual notch width is the gap between the two safe menu-bar areas.
@@ -50,8 +50,42 @@ enum NotchDimensions {
         let measured = rightArea.minX - leftArea.maxX
         let maximumPlausibleWidth = min(CGFloat(420), screen.frame.width * 0.35)
         if measured >= 120, measured <= maximumPlausibleWidth {
-            notchWidth = measured
+            width = measured
         }
+
+        return (width, height)
+    }
+
+    /// The forgiving click/trigger zone for a screen, in global (screen) coordinates.
+    /// Used both to place the trigger window *and* to hit-test notch clicks coming from
+    /// the global event monitor, so the two can never disagree about where the notch is.
+    static func triggerZone(for screen: NSScreen) -> NSRect {
+        let (nw, nh) = notchSize(for: screen)
+        let frame = screen.frame
+
+        let triggerWidth = min(
+            frame.width,
+            max(nw + (triggerHorizontalPadding * 2), minimumTriggerWidth)
+        )
+        let triggerHeight = max(nh + triggerExtraHeight, minimumTriggerHeight)
+        let triggerX = min(
+            max(frame.midX - (triggerWidth / 2), frame.minX),
+            frame.maxX - triggerWidth
+        )
+
+        return NSRect(
+            x: triggerX,
+            y: frame.maxY - triggerHeight,
+            width: triggerWidth,
+            height: triggerHeight
+        )
+    }
+
+    /// Measure the real notch from the screen and cache into notchWidth / notchHeight
+    static func calibrate(from screen: NSScreen) {
+        let size = notchSize(for: screen)
+        notchWidth = size.width
+        notchHeight = size.height
     }
 }
 
@@ -251,25 +285,7 @@ final class NotchWindowManager: ObservableObject {
             height: nh
         )
 
-        let triggerWidth = min(
-            frame.width,
-            max(nw + (NotchDimensions.triggerHorizontalPadding * 2), NotchDimensions.minimumTriggerWidth)
-        )
-        let triggerHeight = max(
-            nh + NotchDimensions.triggerExtraHeight,
-            NotchDimensions.minimumTriggerHeight
-        )
-        let triggerX = min(
-            max(frame.midX - (triggerWidth / 2), frame.minX),
-            frame.maxX - triggerWidth
-        )
-
-        clickZone = NSRect(
-            x: triggerX,
-            y: frame.maxY - triggerHeight,
-            width: triggerWidth,
-            height: triggerHeight
-        )
+        clickZone = NotchDimensions.triggerZone(for: screen)
 
         let ew = NotchDimensions.expandedWidth
         let eh = NotchDimensions.expandedHeight
@@ -307,6 +323,15 @@ final class NotchWindowManager: ObservableObject {
         let loc = NSEvent.mouseLocation
 
         guard isExpanded else {
+            // Collapsed → a left click on the notch opens the panel. We drive this from the
+            // global/local event monitors instead of relying on the transparent trigger
+            // window's `mouseDown`, because that window can be covered by the menu bar, a
+            // full-screen app, or another status-level window — which is exactly why the
+            // notch "sometimes" did nothing. The monitor sees the click regardless of window
+            // stacking or focus, needs no Accessibility permission, and adds no polling.
+            if event.type == .leftMouseDown, isInsideNotchTrigger(loc) {
+                openFromNotchClick()
+            }
             return
         }
 
@@ -408,6 +433,17 @@ final class NotchWindowManager: ObservableObject {
     private func reapplyAllSpacesBehavior() {
         panelWindow?.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenAuxiliary]
         triggerWindow?.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenAuxiliary]
+    }
+
+    /// Whether a global-coordinate point falls inside the notch trigger area.
+    private func isInsideNotchTrigger(_ loc: NSPoint) -> Bool {
+        // Fast path: the cached zone for the currently-tracked screen.
+        if clickZone.contains(loc) { return true }
+        // Robust path: the cached zone only tracks one screen, so recompute the trigger
+        // zone for the screen actually under the cursor. This keeps the notch clickable
+        // right after a display or Space change, before the cached zone has caught up.
+        guard let screen = screenContaining(point: loc) else { return false }
+        return NotchDimensions.triggerZone(for: screen).contains(loc)
     }
 
     private func screenContaining(point: NSPoint) -> NSScreen? {

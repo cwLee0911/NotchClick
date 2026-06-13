@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { Download } from 'lucide-react';
 
-const downloadURL = './downloads/NotchClick.dmg?v=20260519-notch-trigger';
+const downloadURL = './downloads/NotchClick.dmg?v=20260614-1.0.4-notch-reliability';
 
 export function Hero() {
   return (
