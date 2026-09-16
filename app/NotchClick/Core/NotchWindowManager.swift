@@ -168,7 +168,7 @@ private final class FirstMouseHostingView<Content: View>: NSHostingView<Content>
 }
 
 final class NotchTriggerWindow: NSPanel {
-    init(frame: CGRect, manager: NotchWindowManager) {
+    init(frame: CGRect) {
         super.init(
             contentRect: frame,
             styleMask: [.borderless, .nonactivatingPanel],
@@ -182,29 +182,22 @@ final class NotchTriggerWindow: NSPanel {
         collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenAuxiliary]
         isMovable = false
         ignoresMouseEvents = false
-        contentView = NotchTriggerView(manager: manager)
+        contentView = NotchTriggerView()
         orderFrontRegardless()
     }
 }
 
+// Purely a hit target — opening is driven entirely by the global/local event
+// monitors in NotchWindowManager (see handleClick). A mouseDown handler here
+// used to *also* call openFromNotchClick() for the same click, so the click
+// was handled twice: once by the monitor, then again via normal AppKit
+// dispatch to this view. The second call re-ran moveWindows() unguarded,
+// which order-out'd this window from inside its own mouseDown handling —
+// a reentrant call that could leave AppKit's click tracking in a bad state
+// and made the notch intermittently fail to open.
 private final class NotchTriggerView: NSView {
-    weak var manager: NotchWindowManager?
-
-    init(manager: NotchWindowManager) {
-        self.manager = manager
-        super.init(frame: .zero)
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
         true
-    }
-
-    override func mouseDown(with event: NSEvent) {
-        manager?.openFromNotchClick()
     }
 }
 
@@ -226,6 +219,7 @@ final class NotchWindowManager: ObservableObject {
     private var clickZone: NSRect = .zero
     // Expanded zone: where the panel extends when open
     private var expandedZone: NSRect = .zero
+    private var ignoreCollapseUntil: TimeInterval = 0
 
     func setup() {
         guard let screen = defaultScreen else { return }
@@ -234,7 +228,7 @@ final class NotchWindowManager: ObservableObject {
         NotchDimensions.calibrate(from: screen)
         panelWindow = NotchPanelWindow(screen: screen, manager: self)
         rebuildZones(screen: screen)
-        triggerWindow = NotchTriggerWindow(frame: clickZone, manager: self)
+        triggerWindow = NotchTriggerWindow(frame: clickZone)
         startClickTracking()
         startWorkspaceTracking()
         refreshWindowVisibility()
@@ -262,6 +256,13 @@ final class NotchWindowManager: ObservableObject {
     }
 
     func openFromNotchClick() {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in
+                self?.openFromNotchClick()
+            }
+            return
+        }
+
         AppState.shared.launcherVM.reloadFromStorageIfChanged()
 
         if let screen = screenContaining(point: NSEvent.mouseLocation) ?? triggerWindow?.screen {
@@ -303,7 +304,9 @@ final class NotchWindowManager: ObservableObject {
         let mask: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown]
 
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: mask) { [weak self] event in
-            self?.handleClick(event)
+            DispatchQueue.main.async {
+                self?.handleClick(event)
+            }
         }
 
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: mask) { [weak self] event in
@@ -320,7 +323,7 @@ final class NotchWindowManager: ObservableObject {
     }
 
     private func handleClick(_ event: NSEvent) {
-        let loc = NSEvent.mouseLocation
+        let loc = globalLocation(for: event)
 
         guard isExpanded else {
             // Collapsed → a left click on the notch opens the panel. We drive this from the
@@ -335,21 +338,42 @@ final class NotchWindowManager: ObservableObject {
             return
         }
 
+        guard ProcessInfo.processInfo.systemUptime >= ignoreCollapseUntil else {
+            return
+        }
+
         if event.type == .leftMouseDown && visibleNotchZone.contains(loc) {
             collapse()
             return
         }
 
-        let insidePanel = expandedZone
-            .insetBy(
-                dx: -NotchDimensions.expandedClickToleranceX,
-                dy: -NotchDimensions.expandedClickToleranceY
-            )
-            .contains(loc)
+        let expandedHitZone = expandedZone.insetBy(
+            dx: -NotchDimensions.expandedClickToleranceX,
+            dy: -NotchDimensions.expandedClickToleranceY
+        )
+        let insidePanel = eventOriginatesInPanel(event, at: loc) || expandedHitZone.contains(loc)
 
         if !insidePanel {
             collapse()
         }
+    }
+
+    private func globalLocation(for event: NSEvent) -> NSPoint {
+        guard let window = event.window else {
+            return NSEvent.mouseLocation
+        }
+
+        return window.convertPoint(toScreen: event.locationInWindow)
+    }
+
+    private func eventOriginatesInPanel(_ event: NSEvent, at loc: NSPoint) -> Bool {
+        guard let eventWindow = event.window,
+              let panelWindow,
+              eventWindow === panelWindow else {
+            return false
+        }
+
+        return panelWindow.frame.contains(loc)
     }
 
     // MARK: Workspace State
@@ -496,6 +520,7 @@ final class NotchWindowManager: ObservableObject {
     private func expand() {
         guard !isExpanded else { return }
 
+        ignoreCollapseUntil = ProcessInfo.processInfo.systemUptime + 0.18
         panelWindow?.makeKeyAndOrderFront(nil)
         panelWindow?.ignoresMouseEvents = false
         triggerWindow?.orderOut(nil)

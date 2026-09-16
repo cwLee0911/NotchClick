@@ -108,24 +108,26 @@ private struct AppIconTile: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            iconSurface
-                .onTapGesture(perform: onLaunch)
-                .onDrag {
-                    onDragStarted()
-                    return NSItemProvider(object: item.id as NSString)
-                } preview: {
-                    Image(nsImage: item.icon)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 48, height: 48)
-                }
-                .onDrop(
-                    of: [.text],
-                    delegate: LauncherAppDropDelegate(
-                        onDropEntered: onDropEntered,
-                        onDropEnded: onDropEnded
-                    )
+            Button(action: onLaunch) {
+                iconSurface
+            }
+            .buttonStyle(.plain)
+            .onDrag {
+                onDragStarted()
+                return NSItemProvider(object: item.id as NSString)
+            } preview: {
+                Image(nsImage: item.icon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 48, height: 48)
+            }
+            .onDrop(
+                of: [.text],
+                delegate: LauncherAppDropDelegate(
+                    onDropEntered: onDropEntered,
+                    onDropEnded: onDropEnded
                 )
+            )
 
             if isHovered && !isDragging {
                 Button(action: onRemove) {
